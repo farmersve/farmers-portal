@@ -9,9 +9,10 @@
 
 <!-- PDF/Excel libs para descarga del pedido -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&display=swap');
+
   /* ─── Variables corporativas Farmers ─── */
   :root {
     --f-navy: #1B1F6B;
@@ -28,10 +29,16 @@
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--f-bg); color: var(--f-text); }
-  body { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--f-bg); color: var(--f-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body { min-height: 100vh; padding-bottom: 120px; padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
   button { font-family: inherit; cursor: pointer; }
   input, select, textarea { font-family: inherit; font-size: 16px; }
+
+  /* ─── Regla global: TODO EN MAYÚSCULAS dentro del catálogo ─── */
+  /* Se aplica solo en la pantalla del catálogo, no toca splash, form, ni confirmación */
+  #screen-catalog, #screen-catalog input, #screen-catalog textarea { text-transform: uppercase; }
+  #screen-catalog input::placeholder { text-transform: uppercase; }
+  /* Excepciones: precios (usan símbolos $ y Bs), códigos monoespaciados conservan su casing natural pero en mayúscula igual */
 
   /* ─── Pantallas ─── */
   .screen { display: none; min-height: 100vh; padding: 16px; padding-bottom: 120px; }
@@ -52,17 +59,18 @@
   .error-desc { font-size: 0.9rem; color: var(--f-text-muted); line-height: 1.5; }
 
   /* ─── Formulario datos cliente ─── */
-  .form-card { background: #fff; border-radius: 16px; padding: 24px; max-width: 500px; margin: 24px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-  .form-header { text-align: center; margin-bottom: 20px; }
-  .form-logo { width: 80px; height: auto; margin: 0 auto 12px; display: block; }
-  .form-welcome { font-size: 1.2rem; font-weight: 800; color: var(--f-navy); margin: 0 0 4px 0; }
-  .form-client-name { font-size: 0.9rem; color: var(--f-text-muted); }
-  .form-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--f-text); margin: 14px 0 6px 0; }
-  .form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--f-border); border-radius: 10px; font-size: 0.9rem; transition: border-color 0.2s; }
-  .form-input:focus { outline: none; border-color: var(--f-navy); }
-  .form-input.error { border-color: var(--f-danger); }
-  .form-btn { width: 100%; padding: 14px; background: var(--f-navy); color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 800; margin-top: 20px; transition: opacity 0.2s; }
-  .form-btn:active { opacity: 0.85; }
+  .form-card { background: #fff; border-radius: 20px; padding: 32px 28px; max-width: 520px; margin: 24px auto; box-shadow: 0 12px 40px rgba(27,31,107,0.12), 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(27,31,107,0.06); }
+  .form-header { text-align: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid var(--f-bg-alt); }
+  .form-logo { width: 100px; height: auto; margin: 0 auto 14px; display: block; }
+  .form-welcome { font-size: 1.4rem; font-weight: 900; color: var(--f-navy); margin: 0 0 6px 0; letter-spacing: 1px; text-transform: uppercase; }
+  .form-client-name { font-size: 1rem; color: var(--f-orange); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .form-intro-msg { font-size: .82rem; color: var(--f-text-muted); line-height: 1.5; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0f4ff, #f8faff); border-radius: 10px; border-left: 3px solid var(--f-orange); text-align: left; }
+  .form-label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--f-text); margin: 16px 0 6px 0; text-transform: uppercase; letter-spacing: 1px; }
+  .form-input { width: 100%; padding: 13px 15px; border: 1.5px solid var(--f-border); border-radius: 11px; font-size: 0.92rem; transition: all 0.2s; background: #fff; font-weight: 600; }
+  .form-input:focus { outline: none; border-color: var(--f-navy); box-shadow: 0 0 0 3px rgba(27,31,107,0.1); }
+  .form-input.error { border-color: var(--f-danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+  .form-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--f-navy), var(--f-violet)); color: #fff; border: none; border-radius: 11px; font-size: 1rem; font-weight: 800; margin-top: 24px; transition: all 0.2s; letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 16px rgba(27,31,107,0.25); }
+  .form-btn:active { opacity: 0.9; transform: translateY(1px); }
   .form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ─── Catálogo / Header ─── */
@@ -106,6 +114,12 @@
   .pc-stock-good { background:rgba(74,222,128,.22); color:#4ade80; border-color:#4ade80; }
   .pc-stock-low { background:rgba(251,191,36,.22); color:#fbbf24; border-color:#fbbf24; }
   .pc-stock-out { background:rgba(248,113,113,.22); color:#f87171; border-color:#f87171; }
+  /* Badge Ordenada (amarillo, para "cantidades en camino") */
+  .pc-ord-badge { background:rgba(245,158,11,.22); color:#fbbf24; border:1.5px solid #fbbf24; border-radius:9px; padding:6px 10px; min-width:72px; text-align:center; margin-top:5px; }
+  .pc-ord-badge-lbl { font-size:.48rem; font-weight:900; text-transform:uppercase; letter-spacing:.6px; margin-bottom:1px; }
+  .pc-ord-badge-qty { font-family:'Barlow Condensed','Impact',sans-serif; font-weight:900; font-size:1.25rem; line-height:1; }
+  .pc-ord-badge-unit { font-size:.45rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
+  .pc-stock-col { display:flex; flex-direction:column; gap:0; align-items:stretch; }
 
   /* Bloque DATOS sobre fondo blanco */
   .pc-data-block { background:#fff; border-top:2px solid rgba(0,0,0,.08); }
@@ -128,6 +142,15 @@
   .pc-price-lbl { font-size:.55rem; font-weight:800; color:rgba(255,255,255,.85); text-transform:uppercase; letter-spacing:1.2px; }
   .pc-price-val { font-size:1.1rem; font-weight:900; color:#fff; font-family:'Barlow Condensed','Impact',sans-serif; letter-spacing:1px; }
 
+  /* 3 cajas de precios USD | BCV | TF (idéntico al admin) */
+  .pc-prices-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-bottom:10px; }
+  .pc-price-cell { border-radius:7px; padding:6px 4px; text-align:center; }
+  .pc-price-cell.usd { background:linear-gradient(135deg,#10b981 0%,#059669 100%); }
+  .pc-price-cell.bcv { background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%); }
+  .pc-price-cell.tf  { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
+  .pc-price-cell-lbl { font-size:.5rem; font-weight:900; color:rgba(255,255,255,.92); letter-spacing:1px; margin-bottom:2px; }
+  .pc-price-cell-val { font-size:.92rem; font-weight:900; color:#fff; font-family:'Barlow Condensed','Impact',sans-serif; letter-spacing:.5px; line-height:1; }
+
   /* Controles carrito */
   .pc-controls { display:flex; gap:8px; align-items:center; justify-content:space-between; }
   .pc-qty-group { display:flex; align-items:center; border:1.5px solid #e0e4f0; border-radius:22px; overflow:hidden; background:#f8f9ff; }
@@ -145,13 +168,16 @@
   .results-counter { padding:8px 16px; background:#fff; border-bottom:1px solid var(--f-border); font-size:.75rem; color:var(--f-text-muted); font-weight:600; }
   .results-counter strong { color:var(--f-navy); font-weight:800; }
 
-  /* Filtros de stock (adicionales a los de marca) */
-  .stock-filters { padding:8px 16px; background:#f8fafc; border-bottom:1px solid var(--f-border); display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .stock-pill { background:#fff; border:1px solid var(--f-border); color:var(--f-text); padding:5px 12px; border-radius:999px; font-size:.72rem; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px; }
-  .stock-pill.active { background:var(--f-navy); color:#fff; border-color:var(--f-navy); }
-  .stock-pill.in.active { background:#16a34a; border-color:#16a34a; }
-  .stock-pill.low.active { background:#d97706; border-color:#d97706; }
-  .stock-pill.out.active { background:#dc2626; border-color:#dc2626; }
+  /* Filtros de stock — estilo unificado con el admin */
+  .stock-filters { padding:10px 16px; background:#fff; border-bottom:1px solid var(--f-border); display:flex; gap:7px; overflow-x:auto; -webkit-overflow-scrolling:touch; align-items:center; }
+  .stock-filters::before { content:'STOCK:'; font-size:.65rem; font-weight:900; color:#64748b; letter-spacing:1.5px; white-space:nowrap; margin-right:4px; }
+  .stock-pill { background:#f8fafc; border:1.5px solid var(--f-border); color:var(--f-text); padding:7px 14px; border-radius:999px; font-size:.72rem; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; letter-spacing:.5px; transition:all .15s; text-transform:uppercase; }
+  .stock-pill:active { transform:scale(0.96); }
+  .stock-pill.active { background:var(--f-navy); color:#fff; border-color:var(--f-navy); box-shadow:0 2px 8px rgba(27,31,107,.3); }
+  .stock-pill.in.active { background:#16a34a; border-color:#16a34a; box-shadow:0 2px 8px rgba(22,163,74,.35); }
+  .stock-pill.low.active { background:#d97706; border-color:#d97706; box-shadow:0 2px 8px rgba(217,119,6,.35); }
+  .stock-pill.out.active { background:#dc2626; border-color:#dc2626; box-shadow:0 2px 8px rgba(220,38,38,.35); }
+  .stock-pill.ord.active { background:#f59e0b; color:#1f2937; border-color:#f59e0b; box-shadow:0 2px 8px rgba(245,158,11,.35); }
 
   /* Lightbox de imagen */
   .img-lightbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
@@ -163,6 +189,17 @@
   /* Progreso de carga de imágenes */
   .img-progress { position:fixed; top:14px; right:14px; background:var(--f-navy); color:#fff; padding:8px 14px; border-radius:999px; font-size:.72rem; font-weight:700; z-index:15; box-shadow:0 4px 16px rgba(0,0,0,.2); display:none; }
   .img-progress.active { display:block; }
+
+  /* Banner de bienvenida dentro del catálogo */
+  .welcome-banner { background:linear-gradient(135deg, var(--f-navy) 0%, var(--f-violet) 60%, var(--f-orange) 120%); color:#fff; padding:22px 20px; margin:0; position:relative; overflow:hidden; }
+  .welcome-banner::before { content:''; position:absolute; top:-50%; right:-20%; width:300px; height:300px; background:radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%); border-radius:50%; }
+  .wb-content { position:relative; z-index:2; display:flex; align-items:center; gap:18px; max-width:1400px; margin:0 auto; }
+  .wb-icon { font-size:2.2rem; flex-shrink:0; }
+  .wb-text { flex:1; }
+  .wb-title { font-size:1.15rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; line-height:1.2; font-family:'Barlow Condensed',sans-serif; margin:0 0 4px 0; }
+  .wb-subtitle { font-size:.8rem; opacity:.92; font-weight:600; line-height:1.4; margin:0; }
+  .wb-chips { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .wb-chip { background:rgba(255,255,255,.22); padding:3px 10px; border-radius:999px; font-size:.65rem; font-weight:800; letter-spacing:.6px; text-transform:uppercase; backdrop-filter:blur(6px); }
 
   /* ─── Cart modal ─── */
   .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
@@ -244,9 +281,12 @@
   <div class="form-card">
     <div class="form-header">
       <img id="form-logo" class="form-logo" alt="Farmers C.A.">
-      <h2 class="form-welcome" id="form-welcome-title">Bienvenido</h2>
+      <h2 class="form-welcome" id="form-welcome-title">BIENVENIDO</h2>
       <p class="form-client-name" id="form-client-name"></p>
-      <p class="form-client-name" style="margin-top:8px;">Por favor, confirma tus datos para acceder al catálogo</p>
+      <div class="form-intro-msg">
+        <strong style="color:var(--f-navy);font-size:.92rem;">¡Gracias por confiar en Farmers C.A.!</strong><br>
+        Por favor confirma tus datos para acceder a nuestro catálogo completo con precios actualizados, disponibilidad en tiempo real e imágenes de alta calidad.
+      </div>
     </div>
 
     <label class="form-label" for="cli-nombre">Nombre completo *</label>
@@ -261,7 +301,7 @@
     <label class="form-label" for="cli-telefono">Teléfono *</label>
     <input type="tel" id="cli-telefono" class="form-input" placeholder="Ej: 0414-1234567" autocomplete="tel" required>
 
-    <button id="form-submit" class="form-btn">Acceder al catálogo</button>
+    <button id="form-submit" class="form-btn">🛒 Acceder al catálogo</button>
   </div>
 </div>
 
@@ -278,8 +318,25 @@
     </button>
   </div>
 
+  <!-- ── Banner de bienvenida profesional ── -->
+  <div class="welcome-banner">
+    <div class="wb-content">
+      <div class="wb-icon">🛍️</div>
+      <div class="wb-text">
+        <h2 class="wb-title" id="wb-title">BIENVENIDO AL CATÁLOGO FARMERS</h2>
+        <p class="wb-subtitle">Explora nuestro catálogo completo de distribución mayorista · Precios actualizados · Disponibilidad en tiempo real</p>
+        <div class="wb-chips">
+          <span class="wb-chip">✓ Precios USD/BCV/TF</span>
+          <span class="wb-chip">✓ Imágenes HD</span>
+          <span class="wb-chip">✓ Stock en vivo</span>
+          <span class="wb-chip">🇻🇪 Venezuela</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="search-bar">
-    <input type="search" id="search-input" class="search-input" placeholder="Buscar por referencia, descripción, marca...">
+    <input type="search" id="search-input" class="search-input" placeholder="Buscar por referencia, descripción, marca, código...">
   </div>
 
   <div class="filter-pills" id="filter-pills">
@@ -291,6 +348,7 @@
     <button class="stock-pill in" data-stock="IN">✓ Con stock</button>
     <button class="stock-pill low" data-stock="LOW">⚠ Bajo stock</button>
     <button class="stock-pill out" data-stock="OUT">✗ Agotados</button>
+    <button class="stock-pill ord" data-stock="ORD" id="pill-ord" style="display:none;">📦 Con Ordenada</button>
   </div>
 
   <div class="results-counter" id="results-counter"></div>
@@ -368,12 +426,13 @@ const Portal = {
   productos: [],
   inventario: {},
   comprometido: {},
+  ordenada: {},           // farmers_pt_data — cantidades ordenadas (si token lo habilita)
   productImages: {},
   marcasDisponibles: [],
   carrito: {},
   filtroMarca: 'todos',
   filtroBusqueda: '',
-  filtroStock: 'ALL', // ALL | IN | LOW | OUT
+  filtroStock: 'ALL', // ALL | IN | LOW | OUT | ORD
   clienteForm: null,
   pedidoEmitido: null,
   logoB64: null,
@@ -510,6 +569,9 @@ document.getElementById('form-submit').addEventListener('click', async () => {
 
 // ═══ Cargar catálogo desde Firestore ═══
 async function cargarCatalogo() {
+  // Config del token (marcas, moneda, mostrar stock, ocultar agotados, Ordenada on/off)
+  const cfg = Portal.tokenData.configVista || {};
+
   // Productos
   const prodDoc = await getDoc(doc(db, 'data', 'products'));
   if (!prodDoc.exists() || !prodDoc.data().v) {
@@ -533,6 +595,16 @@ async function cargarCatalogo() {
     }
   } catch(e) { console.warn('Sin comprometido'); }
 
+  // Ordenada (farmers_pt_data) — solo si el token lo habilita
+  if (cfg.mostrarOrdenada) {
+    try {
+      const ptDoc = await getDoc(doc(db, 'data', 'pt_data'));
+      if (ptDoc.exists() && ptDoc.data().v) {
+        Portal.ordenada = JSON.parse(ptDoc.data().v);
+      }
+    } catch(e) { console.warn('Sin pt_data'); }
+  }
+
   // Imágenes — Sistema DUAL idéntico al admin:
   //  1) Colección NUEVA 'img/{ref}' (1 doc por imagen, sin límites)
   //  2) Sistema LEGACY 'data/images_N' (chunks con JSON combinado)
@@ -540,7 +612,6 @@ async function cargarCatalogo() {
   await cargarImagenesProductos();
 
   // Aplicar configuración: filtrar por marcas visibles
-  const cfg = Portal.tokenData.configVista || {};
   if (cfg.marcasVisibles && cfg.marcasVisibles.length > 0) {
     Portal.productos = Portal.productos.filter(p =>
       cfg.marcasVisibles.includes(String(p.br || '').toUpperCase())
@@ -634,12 +705,27 @@ function disponibleProducto(ref) {
   return Math.max(0, real - comp);
 }
 
+// Cantidad Ordenada (en camino) — solo si el token lo habilita
+function getOrdenada(ref) {
+  if (!Portal.ordenada || !Portal.ordenada[ref]) return 0;
+  return parseInt(Portal.ordenada[ref].exOrdenada || 0) || 0;
+}
+
+function mostrarOrdenadaActiva() {
+  return !!(Portal.tokenData && Portal.tokenData.configVista && Portal.tokenData.configVista.mostrarOrdenada);
+}
+
 function getPrecio(p) {
   const moneda = Portal.tokenData.configVista?.moneda || 'USD';
   if (moneda === 'BCV') return parseFloat(p.bv || p.u || 0);
   if (moneda === 'TF') return parseFloat(p.t || p.u || 0);
   return parseFloat(p.u || 0);
 }
+
+// Getters específicos para las 3 cajas de precios
+function getPrecioUSD(p) { return parseFloat(p.u || 0); }
+function getPrecioBCV(p) { return parseFloat(p.bv || p.u || 0); }
+function getPrecioTF(p)  { return parseFloat(p.t  || p.u || 0); }
 
 function simboloMoneda() {
   const moneda = Portal.tokenData.configVista?.moneda || 'USD';
@@ -651,6 +737,13 @@ function simboloMoneda() {
 // ═══ Mostrar catálogo ═══
 function mostrarCatalogo() {
   document.getElementById('header-client-name').textContent = Portal.clienteForm.razon;
+
+  // Personalizar banner con nombre del cliente
+  const wbTitle = document.getElementById('wb-title');
+  if (wbTitle) {
+    const firstName = (Portal.clienteForm.nombre || '').split(' ')[0].toUpperCase();
+    wbTitle.textContent = firstName ? ('BIENVENIDO, ' + firstName) : 'BIENVENIDO AL CATÁLOGO FARMERS';
+  }
 
   // Pills de filtros de marca
   const pillsContainer = document.getElementById('filter-pills');
@@ -678,6 +771,11 @@ function mostrarCatalogo() {
   });
 
   // Filtros de stock
+  // Mostrar pill "Con Ordenada" solo si el token lo tiene activado
+  if (mostrarOrdenadaActiva()) {
+    const pillOrd = document.getElementById('pill-ord');
+    if (pillOrd) pillOrd.style.display = '';
+  }
   document.querySelectorAll('#stock-filters .stock-pill').forEach(p => {
     p.addEventListener('click', () => {
       document.querySelectorAll('#stock-filters .stock-pill').forEach(x => x.classList.remove('active'));
@@ -719,12 +817,13 @@ function renderProductos() {
     }
 
     // Filtro de stock — umbrales unificados con el admin
-    // Con stock > 10  |  Bajo 1–10  |  Agotado = 0
+    // Con stock > 10  |  Bajo 1–10  |  Agotado = 0  |  Con Ordenada (exOrdenada > 0)
     if (Portal.filtroStock !== 'ALL') {
       const disp = disponibleProducto(p.r);
       if (Portal.filtroStock === 'IN'  && !(disp > 10)) return false;
       if (Portal.filtroStock === 'LOW' && !(disp > 0 && disp <= 10)) return false;
       if (Portal.filtroStock === 'OUT' && !(disp === 0)) return false;
+      if (Portal.filtroStock === 'ORD' && !(getOrdenada(p.r) > 0)) return false;
     }
 
     return true;
@@ -734,7 +833,7 @@ function renderProductos() {
   const total = Portal.productos.length;
   const marcaTxt = Portal.filtroMarca !== 'todos' ? ' · ' + Portal.filtroMarca : '';
   const stockTxt = Portal.filtroStock !== 'ALL'
-    ? ' · ' + ({ IN: 'Con stock', LOW: 'Bajo stock', OUT: 'Agotados' }[Portal.filtroStock] || '')
+    ? ' · ' + ({ IN: 'Con stock', LOW: 'Bajo stock', OUT: 'Agotados', ORD: 'Con Ordenada' }[Portal.filtroStock] || '')
     : '';
   counter.innerHTML = '<strong>' + filtrados.length + '</strong> de ' + total + ' referencias' + marcaTxt + stockTxt;
 
@@ -786,6 +885,23 @@ function crearCardProducto(p) {
     }
   }
 
+  // Badge Ordenada (solo si el token lo habilita y hay cantidad > 0)
+  const ordQty = mostrarOrdenadaActiva() ? getOrdenada(p.r) : 0;
+  let ordBadgeHTML = '';
+  if (ordQty > 0) {
+    ordBadgeHTML =
+      '<div class="pc-ord-badge">' +
+        '<div class="pc-ord-badge-lbl">📦 ORDENADA</div>' +
+        '<div class="pc-ord-badge-qty">' + ordQty + '</div>' +
+        '<div class="pc-ord-badge-unit">UDS</div>' +
+      '</div>';
+  }
+
+  // Apilar stock + ordenada si hay ambos
+  const badgeStackHTML = (badgeHTML || ordBadgeHTML)
+    ? '<div class="pc-stock-col">' + badgeHTML + ordBadgeHTML + '</div>'
+    : '';
+
   // Imagen o placeholder
   const imgHTML = img
     ? '<div class="pc-image" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '"><img src="' + img + '" alt="' + (p.r || '') + '"></div>'
@@ -807,7 +923,7 @@ function crearCardProducto(p) {
           '<div class="pc-ref">' + esc(p.r) + '</div>' +
           '<div class="pc-brand-label">' + esc(p.br || '') + '</div>' +
         '</div>' +
-        badgeHTML +
+        badgeStackHTML +
       '</div>' +
 
       // ══ DATOS fondo blanco ══
@@ -842,9 +958,19 @@ function crearCardProducto(p) {
         '</div>' +
       '</div>' +
 
-      '<div class="pc-price-box">' +
-        '<div class="pc-price-lbl">PRECIO ' + moneda + '</div>' +
-        '<div class="pc-price-val">' + simb + precio.toFixed(2) + '</div>' +
+      '<div class="pc-prices-3">' +
+        '<div class="pc-price-cell usd">' +
+          '<div class="pc-price-cell-lbl">USD</div>' +
+          '<div class="pc-price-cell-val">$ ' + getPrecioUSD(p).toFixed(2) + '</div>' +
+        '</div>' +
+        '<div class="pc-price-cell bcv">' +
+          '<div class="pc-price-cell-lbl">BCV</div>' +
+          '<div class="pc-price-cell-val">Bs ' + getPrecioBCV(p).toFixed(2) + '</div>' +
+        '</div>' +
+        '<div class="pc-price-cell tf">' +
+          '<div class="pc-price-cell-lbl">TF</div>' +
+          '<div class="pc-price-cell-val">Bs ' + getPrecioTF(p).toFixed(2) + '</div>' +
+        '</div>' +
       '</div>' +
 
       '<div class="pc-controls">' +
@@ -1007,8 +1133,14 @@ async function enviarPedido() {
       desc: i.producto.d,
       qty: i.qty,
       precioMostrado: i.precio,
+      precioUSD: parseFloat(i.producto.u || 0),
+      precioBCV: parseFloat(i.producto.bv || i.producto.u || 0),
+      precioTF:  parseFloat(i.producto.t  || i.producto.u || 0),
       codigoBarra: i.producto.b || '',
+      codigoInterno: i.producto.c || '',
       marca: i.producto.br || '',
+      empaque: i.producto.e || '',
+      medida: i.producto.m || '',
     }));
 
     const total = items.reduce((s, i) => s + i.qty * i.precioMostrado, 0);
@@ -1056,89 +1188,153 @@ function descargarPDF() {
   const p = Portal.pedidoEmitido;
   if (!p) return;
   const simb = p.moneda === 'USD' ? '$' : 'Bs ';
-  const fecha = (p.fechaLocal || new Date()).toLocaleDateString('es-VE');
+  const fecha = (p.fechaLocal || new Date()).toLocaleString('es-VE');
+  const fechaCorta = (p.fechaLocal || new Date()).toLocaleDateString('es-VE');
+  const numPedido = 'PORTAL-' + p.id.substring(0, 8).toUpperCase();
+  const filename = 'FARMERS - PEDIDO PORTAL (' + String(p.cliente.razon||'Cliente').replace(/[^\w\s.,-]/g,'').trim() + ') N° ' + numPedido + ' (' + fechaCorta.replace(/\//g,'-') + ')';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  const html = `
-    <div style="font-family:sans-serif;padding:20px;color:#1e293b;max-width:800px;">
-      ${Portal.logoB64 ? '<img src="' + Portal.logoB64 + '" style="height:60px;margin-bottom:14px;">' : ''}
-      <h1 style="color:#1B1F6B;margin:0 0 4px 0;font-size:1.4rem;">PEDIDO DEL PORTAL CLIENTE</h1>
-      <p style="color:#64748b;font-size:0.85rem;margin:0 0 14px 0;">N° PORTAL-${p.id.substring(0, 8).toUpperCase()} · ${fecha}</p>
-      <table style="width:100%;font-size:0.78rem;margin-bottom:14px;">
-        <tr><td style="padding:3px 0;font-weight:700;">Cliente:</td><td>${p.cliente.nombre}</td></tr>
-        <tr><td style="padding:3px 0;font-weight:700;">Razón social:</td><td>${p.cliente.razon}</td></tr>
-        <tr><td style="padding:3px 0;font-weight:700;">RIF:</td><td>${p.cliente.rif}</td></tr>
-        <tr><td style="padding:3px 0;font-weight:700;">Teléfono:</td><td>${p.cliente.telefono}</td></tr>
-      </table>
-      <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
-        <thead>
-          <tr style="background:#1B1F6B;color:#fff;">
-            <th style="padding:7px;text-align:left;">REF</th>
-            <th style="padding:7px;text-align:left;">DESCRIPCIÓN</th>
-            <th style="padding:7px;text-align:center;">CANT</th>
-            <th style="padding:7px;text-align:right;">PRECIO</th>
-            <th style="padding:7px;text-align:right;">SUBTOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${p.items.map((it, idx) => `
-            <tr style="background:${idx % 2 === 0 ? '#fff' : '#f8fafc'};">
-              <td style="padding:5px 7px;font-family:monospace;font-weight:700;">${it.ref}</td>
-              <td style="padding:5px 7px;">${it.desc}</td>
-              <td style="padding:5px 7px;text-align:center;font-weight:700;">${it.qty}</td>
-              <td style="padding:5px 7px;text-align:right;">${simb}${it.precioMostrado.toFixed(2)}</td>
-              <td style="padding:5px 7px;text-align:right;font-weight:700;">${simb}${(it.qty * it.precioMostrado).toFixed(2)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-        <tfoot>
-          <tr style="background:#1B1F6B;color:#fff;">
-            <td colspan="4" style="padding:10px;text-align:right;font-weight:800;">TOTAL:</td>
-            <td style="padding:10px;text-align:right;font-weight:900;font-size:1rem;">${simb}${p.total.toFixed(2)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  `;
+  const html =
+    '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<title>' + filename + '</title>' +
+    '<style>' +
+      '@page { size: A4 landscape; margin: 5mm 6mm; }' +
+      '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }' +
+      'body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; color: #1e293b; font-size: 10px; }' +
+      '.header { background: linear-gradient(135deg, #1B1F6B, #9B6FD4); color: #fff; padding: 12px 18px; display: flex; align-items: center; gap: 14px; border-radius: 6px 6px 0 0; }' +
+      '.header .logo { height: 48px; background: #fff; border-radius: 6px; padding: 5px 9px; }' +
+      '.header .title { flex: 1; }' +
+      '.header h1 { margin: 0; font-size: 15px; letter-spacing: 1px; font-weight: 900; text-transform: uppercase; }' +
+      '.header .num { font-size: 10px; opacity: .95; font-family: "Courier New", monospace; font-weight: 700; margin-top: 2px; }' +
+      '.header .date { font-size: 9px; opacity: .85; margin-top: 2px; }' +
+      '.client-info { background: #f8faff; padding: 8px 18px; border-left: 3px solid #F47B3E; }' +
+      '.client-info table { width: 100%; font-size: 9px; }' +
+      '.client-info td { padding: 2px 0; }' +
+      '.client-info td.lbl { font-weight: 800; color: #475569; width: 90px; text-transform: uppercase; font-size: 8px; letter-spacing: .5px; }' +
+      '.client-info td.val { color: #1e293b; font-weight: 600; text-transform: uppercase; }' +
+      'table.items { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8.5px; }' +
+      'table.items th { background: #1B1F6B; color: #fff; padding: 5px 5px; text-align: left; font-size: 8px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; }' +
+      'table.items td { padding: 4px 5px; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; }' +
+      'table.items tr:nth-child(even) { background: #f8fafc; }' +
+      'table.items .ref { font-family: "Courier New", monospace; font-weight: 700; color: #1B1F6B; font-size: 8px; }' +
+      'table.items .qty { text-align: center; font-weight: 700; }' +
+      'table.items .price { text-align: right; }' +
+      'table.items .sub { text-align: right; font-weight: 800; color: #059669; }' +
+      '.totals { margin-top: 6px; background: #1B1F6B; color: #fff; padding: 9px 18px; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 6px 6px; }' +
+      '.totals .lbl { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }' +
+      '.totals .val { font-size: 15px; font-weight: 900; }' +
+      '.noprint { text-align: center; padding: 20px; }' +
+      '.print-btn { background: #1B1F6B; color: #fff; border: none; border-radius: 8px; padding: 11px 32px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(27,31,107,.3); }' +
+      '@media print { .noprint { display: none !important; } }' +
+    '</style></head><body>' +
+    '<div class="noprint"><button class="print-btn" onclick="window.print()">🖨 Imprimir / Guardar como PDF</button></div>' +
+    '<div class="header">' +
+      (Portal.logoB64 ? '<img class="logo" src="' + Portal.logoB64 + '" alt="Farmers">' : '') +
+      '<div class="title">' +
+        '<h1>FARMERS C.A. — PEDIDO PORTAL CLIENTE</h1>' +
+        '<div class="num">N° ' + numPedido + '</div>' +
+        '<div class="date">Fecha del pedido: ' + esc(fecha) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="client-info"><table>' +
+      '<tr><td class="lbl">CLIENTE</td><td class="val">' + esc(p.cliente.nombre) + '</td></tr>' +
+      '<tr><td class="lbl">RAZÓN SOCIAL</td><td class="val">' + esc(p.cliente.razon) + '</td></tr>' +
+      '<tr><td class="lbl">RIF</td><td class="val">' + esc(p.cliente.rif) + '</td></tr>' +
+      '<tr><td class="lbl">TELÉFONO</td><td class="val">' + esc(p.cliente.telefono) + '</td></tr>' +
+    '</table></div>' +
+    '<table class="items">' +
+      '<thead><tr>' +
+        '<th style="width:9%;">REF</th>' +
+        '<th style="width:11%;">CÓD. BARRAS</th>' +
+        '<th style="width:9%;">CÓDIGO</th>' +
+        '<th>DESCRIPCIÓN</th>' +
+        '<th style="width:8%;">MARCA</th>' +
+        '<th style="width:8%;">EMPAQUE</th>' +
+        '<th style="width:5%;text-align:center;">MED</th>' +
+        '<th style="width:6%;text-align:center;">CANT</th>' +
+        '<th style="width:10%;text-align:right;">P.U.</th>' +
+        '<th style="width:11%;text-align:right;">SUBTOTAL</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+        p.items.map(function(it){
+          var sub = (parseFloat(it.qty)||0) * (parseFloat(it.precioMostrado)||0);
+          return '<tr>' +
+            '<td class="ref">' + esc(it.ref || '—') + '</td>' +
+            '<td class="ref">' + esc(it.codigoBarra || '—') + '</td>' +
+            '<td class="ref">' + esc(it.codigoInterno || '—') + '</td>' +
+            '<td>' + esc(it.desc || '—') + '</td>' +
+            '<td>' + esc(it.marca || '—') + '</td>' +
+            '<td>' + esc(it.empaque || '—') + '</td>' +
+            '<td class="qty">' + esc(it.medida || '—') + '</td>' +
+            '<td class="qty">' + (it.qty || 0) + '</td>' +
+            '<td class="price">' + simb + (parseFloat(it.precioMostrado)||0).toFixed(2) + '</td>' +
+            '<td class="sub">' + simb + sub.toFixed(2) + '</td>' +
+          '</tr>';
+        }).join('') +
+      '</tbody>' +
+    '</table>' +
+    '<div class="totals">' +
+      '<div class="lbl">TOTAL ' + (p.moneda || 'USD') + '</div>' +
+      '<div class="val">' + simb + p.total.toFixed(2) + '</div>' +
+    '</div>' +
+    '</body></html>';
 
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  document.body.appendChild(el);
-  const opt = {
-    margin: 0.3,
-    filename: `FARMERS - PEDIDO PORTAL ${p.cliente.razon} - ${fecha}.pdf`,
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(el).save().then(() => el.remove());
+  const w = window.open('', '_blank');
+  if (!w) { alert('Habilita las ventanas emergentes para descargar el PDF.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.document.title = filename;
 }
 
 function descargarExcel() {
   const p = Portal.pedidoEmitido;
   if (!p) return;
-  const simb = p.moneda === 'USD' ? '$' : 'Bs ';
-  const fecha = (p.fechaLocal || new Date()).toLocaleDateString('es-VE');
+  const fecha = (p.fechaLocal || new Date()).toLocaleString('es-VE');
+  const fechaCorta = (p.fechaLocal || new Date()).toLocaleDateString('es-VE').replace(/\//g, '-');
+  const numPedido = 'PORTAL-' + p.id.substring(0, 8).toUpperCase();
 
   const data = [
     ['FARMERS C.A. — PEDIDO PORTAL CLIENTE'],
-    ['N° Pedido:', 'PORTAL-' + p.id.substring(0, 8).toUpperCase(), 'Fecha:', fecha],
-    ['Cliente:', p.cliente.nombre],
-    ['Razón social:', p.cliente.razon],
-    ['RIF:', p.cliente.rif],
-    ['Teléfono:', p.cliente.telefono],
+    ['N° Pedido', numPedido, '', 'Fecha', fecha],
     [],
-    ['REFERENCIA', 'DESCRIPCIÓN', 'CÓD. BARRA', 'MARCA', 'CANTIDAD', 'PRECIO ' + p.moneda, 'SUBTOTAL ' + p.moneda],
-    ...p.items.map(it => [
-      it.ref, it.desc, it.codigoBarra || '', it.marca || '',
-      it.qty, it.precioMostrado, it.qty * it.precioMostrado
-    ]),
+    ['DATOS DEL CLIENTE'],
+    ['Nombre', p.cliente.nombre || ''],
+    ['Razón social', p.cliente.razon || ''],
+    ['RIF', p.cliente.rif || ''],
+    ['Teléfono', p.cliente.telefono || ''],
     [],
-    ['', '', '', '', 'TOTAL:', '', p.total]
+    ['DETALLE DE PRODUCTOS'],
+    ['REFERENCIA', 'CÓDIGO BARRA', 'CÓDIGO INTERNO', 'DESCRIPCIÓN', 'MARCA', 'EMPAQUE', 'MEDIDA', 'CANTIDAD', 'PRECIO USD', 'PRECIO BCV', 'PRECIO TF', 'PRECIO ' + (p.moneda || 'USD'), 'SUBTOTAL ' + (p.moneda || 'USD')],
+    ...p.items.map(it => {
+      const sub = (parseFloat(it.qty)||0) * (parseFloat(it.precioMostrado)||0);
+      return [
+        it.ref || '',
+        it.codigoBarra || '',
+        it.codigoInterno || '',
+        it.desc || '',
+        it.marca || '',
+        it.empaque || '',
+        it.medida || '',
+        parseFloat(it.qty) || 0,
+        parseFloat(it.precioUSD || 0),
+        parseFloat(it.precioBCV || 0),
+        parseFloat(it.precioTF  || 0),
+        parseFloat(it.precioMostrado) || 0,
+        sub
+      ];
+    }),
+    [],
+    ['', '', '', '', '', '', '', '', '', '', '', 'TOTAL:', p.total || 0]
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(data);
+  // Anchos: REF, CB, CódInt, DESC, MARCA, EMP, MED, CANT, USD, BCV, TF, PRECIO, SUB
+  ws['!cols'] = [ {wch:12}, {wch:16}, {wch:14}, {wch:42}, {wch:12}, {wch:12}, {wch:8}, {wch:10}, {wch:12}, {wch:12}, {wch:12}, {wch:13}, {wch:14} ];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Pedido');
-  XLSX.writeFile(wb, `FARMERS - PEDIDO PORTAL ${p.cliente.razon} - ${fecha}.xlsx`);
+  const filename = 'FARMERS - PEDIDO PORTAL (' + String(p.cliente.razon||'Cliente').replace(/[^\w\s.,-]/g,'').trim() + ') N° ' + numPedido + ' (' + fechaCorta + ').xlsx';
+  XLSX.writeFile(wb, filename);
 }
 
 // ═══ Manejo global de errores: si algo falla catastróficamente, mostrar mensaje ═══

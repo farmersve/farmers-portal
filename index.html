@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Portal Cliente - Farmers C.A.</title>
+
+<!-- PDF/Excel libs para descarga del pedido -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  /* ─── Variables corporativas Farmers ─── */
+  :root {
+    --f-navy: #1B1F6B;
+    --f-orange: #F47B3E;
+    --f-violet: #9B6FD4;
+    --f-bg: #f8fafc;
+    --f-bg-alt: #f1f5f9;
+    --f-text: #1e293b;
+    --f-text-muted: #64748b;
+    --f-border: #e2e8f0;
+    --f-success: #059669;
+    --f-danger: #dc2626;
+    --f-warn: #d97706;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--f-bg); color: var(--f-text); }
+  body { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; font-size: 16px; }
+
+  /* ─── Pantallas ─── */
+  .screen { display: none; min-height: 100vh; padding: 16px; padding-bottom: 120px; }
+  .screen.active { display: block; }
+
+  /* ─── Splash / Loading ─── */
+  .splash-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; text-align: center; background: linear-gradient(135deg, var(--f-navy), var(--f-violet)); color: #fff; }
+  .splash-logo { width: 140px; height: auto; margin-bottom: 24px; background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .splash-title { font-size: 1.6rem; font-weight: 800; margin: 0 0 8px 0; }
+  .splash-subtitle { font-size: 0.9rem; opacity: 0.85; max-width: 400px; margin-bottom: 24px; }
+  .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Mensaje de error de token ─── */
+  .error-card { background: #fff; border-radius: 16px; padding: 32px 24px; max-width: 400px; margin: 40px auto; box-shadow: 0 8px 32px rgba(0,0,0,0.08); text-align: center; }
+  .error-icon { font-size: 3rem; margin-bottom: 12px; }
+  .error-title { font-size: 1.3rem; font-weight: 800; color: var(--f-danger); margin: 0 0 12px 0; }
+  .error-desc { font-size: 0.9rem; color: var(--f-text-muted); line-height: 1.5; }
+
+  /* ─── Formulario datos cliente ─── */
+  .form-card { background: #fff; border-radius: 16px; padding: 24px; max-width: 500px; margin: 24px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .form-header { text-align: center; margin-bottom: 20px; }
+  .form-logo { width: 80px; height: auto; margin: 0 auto 12px; display: block; }
+  .form-welcome { font-size: 1.2rem; font-weight: 800; color: var(--f-navy); margin: 0 0 4px 0; }
+  .form-client-name { font-size: 0.9rem; color: var(--f-text-muted); }
+  .form-label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--f-text); margin: 14px 0 6px 0; }
+  .form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--f-border); border-radius: 10px; font-size: 0.9rem; transition: border-color 0.2s; }
+  .form-input:focus { outline: none; border-color: var(--f-navy); }
+  .form-input.error { border-color: var(--f-danger); }
+  .form-btn { width: 100%; padding: 14px; background: var(--f-navy); color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 800; margin-top: 20px; transition: opacity 0.2s; }
+  .form-btn:active { opacity: 0.85; }
+  .form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ─── Catálogo / Header ─── */
+  .catalog-header { background: var(--f-navy); color: #fff; padding: 14px 16px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .ch-logo { height: 32px; width: auto; background: #fff; border-radius: 6px; padding: 2px 6px; }
+  .ch-info { flex: 1; margin-left: 10px; min-width: 0; }
+  .ch-title { font-size: 0.85rem; font-weight: 700; margin: 0; line-height: 1.2; }
+  .ch-client { font-size: 0.65rem; opacity: 0.8; margin: 2px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ch-cart-btn { background: var(--f-orange); color: #fff; border: none; border-radius: 20px; padding: 8px 14px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
+  .ch-cart-badge { background: #fff; color: var(--f-orange); border-radius: 999px; padding: 0 6px; font-size: 0.72rem; font-weight: 900; min-width: 18px; text-align: center; }
+
+  /* ─── Buscador ─── */
+  .search-bar { padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--f-border); position: sticky; top: 60px; z-index: 9; }
+  .search-input { width: 100%; padding: 10px 14px 10px 38px; border: 1px solid var(--f-border); border-radius: 20px; font-size: 0.85rem; background: var(--f-bg-alt) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>") no-repeat 14px center; }
+
+  /* ─── Product grid ─── */
+  .products-grid { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px 16px; }
+  @media (min-width: 600px) { .products-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 900px) { .products-grid { grid-template-columns: 1fr 1fr 1fr; } }
+  @media (min-width: 1200px) { .products-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+
+  .product-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--f-border); transition: transform 0.15s; }
+  .product-card:active { transform: scale(0.98); }
+  .pc-image { width: 100%; height: 120px; background: var(--f-bg-alt); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .pc-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .pc-image-placeholder { color: var(--f-text-muted); font-size: 0.72rem; }
+  .pc-brand-bar { height: 4px; background: var(--f-orange); }
+  .pc-body { padding: 10px 12px; }
+  .pc-ref { font-family: 'Courier New', monospace; font-size: 0.68rem; color: var(--f-text-muted); font-weight: 700; }
+  .pc-desc { font-size: 0.82rem; font-weight: 700; color: var(--f-text); margin: 4px 0 6px 0; min-height: 2.5em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pc-meta { display: flex; gap: 8px; font-size: 0.65rem; color: var(--f-text-muted); margin-bottom: 8px; }
+  .pc-price-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 10px; }
+  .pc-price { font-size: 1rem; font-weight: 900; color: var(--f-success); }
+  .pc-stock-badge { font-size: 0.62rem; font-weight: 700; padding: 2px 6px; border-radius: 999px; }
+  .pc-stock-good { background: #dcfce7; color: #166534; }
+  .pc-stock-low { background: #fef3c7; color: #92400e; }
+  .pc-stock-out { background: #fee2e2; color: var(--f-danger); }
+  .pc-controls { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+  .pc-qty-group { display: flex; align-items: center; gap: 0; border: 1px solid var(--f-border); border-radius: 20px; overflow: hidden; }
+  .pc-qty-btn { width: 32px; height: 32px; background: var(--f-bg-alt); color: var(--f-navy); border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .pc-qty-btn:active { background: var(--f-border); }
+  .pc-qty-input { width: 50px; height: 32px; border: none; text-align: center; font-weight: 800; font-size: 0.85rem; background: #fff; color: var(--f-text); -moz-appearance: textfield; }
+  .pc-qty-input::-webkit-outer-spin-button, .pc-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pc-add-btn { background: var(--f-navy); color: #fff; border: none; border-radius: 20px; padding: 8px 12px; font-weight: 700; font-size: 0.75rem; }
+  .pc-add-btn.added { background: var(--f-success); }
+
+  /* ─── Cart modal ─── */
+  .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
+  .modal-ov.active { display: flex; }
+  @media (min-width: 600px) { .modal-ov { align-items: center; } }
+  .modal-box { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; }
+  @media (min-width: 600px) { .modal-box { border-radius: 16px; max-height: 85vh; } }
+  .modal-header { padding: 14px 16px; background: var(--f-navy); color: #fff; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .modal-title { font-size: 1rem; font-weight: 800; margin: 0; }
+  .modal-close { background: none; border: none; color: #fff; font-size: 1.6rem; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+  .modal-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .modal-footer { padding: 14px 16px; background: var(--f-bg-alt); border-top: 1px solid var(--f-border); flex-shrink: 0; }
+
+  /* ─── Cart items ─── */
+  .cart-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--f-border); align-items: center; }
+  .ci-info { flex: 1; min-width: 0; }
+  .ci-ref { font-family: 'Courier New', monospace; font-size: 0.7rem; color: var(--f-text-muted); font-weight: 700; }
+  .ci-desc { font-size: 0.82rem; font-weight: 700; color: var(--f-text); margin: 2px 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ci-price-qty { display: flex; gap: 10px; align-items: center; justify-content: space-between; font-size: 0.72rem; }
+  .ci-subtotal { font-weight: 800; color: var(--f-success); }
+  .ci-remove { background: none; border: 1px solid var(--f-danger); color: var(--f-danger); border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; font-weight: 700; }
+
+  .cart-total-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 0.9rem; }
+  .cart-total-row.total { font-size: 1.1rem; font-weight: 900; border-top: 2px solid var(--f-border); padding-top: 12px; margin-top: 6px; }
+  .cart-send-btn { width: 100%; padding: 14px; background: var(--f-orange); color: #fff; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 800; margin-top: 10px; }
+  .cart-send-btn:active { opacity: 0.85; }
+  .cart-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cart-empty { text-align: center; padding: 40px 20px; color: var(--f-text-muted); font-size: 0.9rem; }
+
+  /* ─── Confirmation screen ─── */
+  .confirm-card { background: #fff; border-radius: 16px; padding: 24px 20px; max-width: 500px; margin: 24px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.06); text-align: center; }
+  .confirm-icon { font-size: 3.5rem; margin-bottom: 12px; }
+  .confirm-title { font-size: 1.4rem; font-weight: 800; color: var(--f-success); margin: 0 0 8px 0; }
+  .confirm-desc { font-size: 0.9rem; color: var(--f-text-muted); line-height: 1.5; margin-bottom: 20px; }
+  .confirm-order-num { background: var(--f-bg-alt); padding: 12px; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: 800; color: var(--f-navy); margin-bottom: 20px; }
+  .confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+  .confirm-btn { padding: 12px 18px; border: none; border-radius: 10px; font-weight: 800; font-size: 0.88rem; }
+  .confirm-btn-primary { background: var(--f-navy); color: #fff; }
+  .confirm-btn-secondary { background: var(--f-bg-alt); color: var(--f-navy); border: 1px solid var(--f-border); }
+
+  /* ─── Fixed bottom bar (cart summary) ─── */
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--f-navy); color: #fff; padding: 12px 16px; display: none; justify-content: space-between; align-items: center; box-shadow: 0 -4px 16px rgba(0,0,0,0.2); z-index: 20; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .bottom-bar.active { display: flex; }
+  .bb-summary { font-size: 0.8rem; }
+  .bb-total { font-size: 1.05rem; font-weight: 900; }
+  .bb-btn { background: var(--f-orange); color: #fff; border: none; border-radius: 20px; padding: 10px 18px; font-weight: 800; font-size: 0.85rem; }
+
+  /* ─── Filtros ─── */
+  .filter-pills { padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--f-border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .filter-pill { background: var(--f-bg-alt); border: 1px solid var(--f-border); color: var(--f-text); padding: 6px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+  .filter-pill.active { background: var(--f-navy); color: #fff; border-color: var(--f-navy); }
+</style>
+</head>
+<body>
+
+<!-- ══════════ PANTALLA 1: SPLASH / LOADING ══════════ -->
+<div id="screen-loading" class="screen active">
+  <div class="splash-container">
+    <img id="splash-logo" class="splash-logo" alt="Farmers C.A.">
+    <h1 class="splash-title">Portal Cliente</h1>
+    <p class="splash-subtitle">Farmers C.A. — Venezuela<br>Validando tu acceso...</p>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- ══════════ PANTALLA DE ERROR ══════════ -->
+<div id="screen-error" class="screen">
+  <div class="error-card">
+    <div class="error-icon">⚠️</div>
+    <h2 class="error-title">Acceso no válido</h2>
+    <p class="error-desc" id="error-msg">
+      Este link no es válido o ha sido desactivado. Por favor, contacta a Farmers C.A. al 0412-0445797 o farmersve@gmail.com para obtener un nuevo link de acceso.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════ PANTALLA 2: FORMULARIO DATOS ══════════ -->
+<div id="screen-form" class="screen">
+  <div class="form-card">
+    <div class="form-header">
+      <img id="form-logo" class="form-logo" alt="Farmers C.A.">
+      <h2 class="form-welcome" id="form-welcome-title">Bienvenido</h2>
+      <p class="form-client-name" id="form-client-name"></p>
+      <p class="form-client-name" style="margin-top:8px;">Por favor, confirma tus datos para acceder al catálogo</p>
+    </div>
+
+    <label class="form-label" for="cli-nombre">Nombre completo *</label>
+    <input type="text" id="cli-nombre" class="form-input" placeholder="Ej: Juan Pérez" autocomplete="name" required>
+
+    <label class="form-label" for="cli-razon">Razón social *</label>
+    <input type="text" id="cli-razon" class="form-input" placeholder="Ej: Mi Empresa, C.A." autocomplete="organization" required>
+
+    <label class="form-label" for="cli-rif">RIF *</label>
+    <input type="text" id="cli-rif" class="form-input" placeholder="Ej: J-12345678-9" autocomplete="off" required>
+
+    <label class="form-label" for="cli-telefono">Teléfono *</label>
+    <input type="tel" id="cli-telefono" class="form-input" placeholder="Ej: 0414-1234567" autocomplete="tel" required>
+
+    <button id="form-submit" class="form-btn">Acceder al catálogo</button>
+  </div>
+</div>
+
+<!-- ══════════ PANTALLA 3: CATÁLOGO ══════════ -->
+<div id="screen-catalog" class="screen">
+  <div class="catalog-header">
+    <img id="header-logo" class="ch-logo" alt="Farmers">
+    <div class="ch-info">
+      <p class="ch-title">Catálogo Farmers C.A.</p>
+      <p class="ch-client" id="header-client-name"></p>
+    </div>
+    <button class="ch-cart-btn" id="header-cart-btn">
+      🛒 <span class="ch-cart-badge" id="cart-badge">0</span>
+    </button>
+  </div>
+
+  <div class="search-bar">
+    <input type="search" id="search-input" class="search-input" placeholder="Buscar por referencia, descripción, marca...">
+  </div>
+
+  <div class="filter-pills" id="filter-pills">
+    <button class="filter-pill active" data-filter="todos">Todos</button>
+  </div>
+
+  <div class="products-grid" id="products-grid"></div>
+
+  <div id="no-products" style="text-align:center;padding:40px 20px;color:var(--f-text-muted);display:none;">
+    <p style="font-size:0.9rem;">No hay productos que coincidan con tu búsqueda.</p>
+  </div>
+</div>
+
+<!-- ══════════ BOTTOM BAR CARRITO ══════════ -->
+<div class="bottom-bar" id="bottom-bar">
+  <div>
+    <div class="bb-summary"><span id="bb-items">0</span> producto(s)</div>
+    <div class="bb-total">$<span id="bb-total">0.00</span></div>
+  </div>
+  <button class="bb-btn" id="bb-view-cart">Ver carrito →</button>
+</div>
+
+<!-- ══════════ MODAL: CARRITO ══════════ -->
+<div class="modal-ov" id="cart-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Tu pedido</h3>
+      <button class="modal-close" id="cart-close">×</button>
+    </div>
+    <div class="modal-body" id="cart-body"></div>
+    <div class="modal-footer" id="cart-footer"></div>
+  </div>
+</div>
+
+<!-- ══════════ PANTALLA 4: CONFIRMACIÓN ══════════ -->
+<div id="screen-confirm" class="screen">
+  <div class="confirm-card">
+    <div class="confirm-icon">✓</div>
+    <h2 class="confirm-title">¡Pedido enviado!</h2>
+    <p class="confirm-desc">
+      Tu pedido ha sido enviado a Farmers C.A. El equipo lo revisará y se comunicará contigo pronto.
+    </p>
+    <div class="confirm-order-num" id="confirm-order-num">PORTAL-XXXX</div>
+    <div class="confirm-actions">
+      <button class="confirm-btn confirm-btn-primary" id="btn-download-pdf">📄 Descargar PDF</button>
+      <button class="confirm-btn confirm-btn-primary" id="btn-download-excel">📊 Descargar Excel</button>
+      <button class="confirm-btn confirm-btn-secondary" id="btn-new-order">Hacer otro pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Firebase + lógica portal ══════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk",
+  authDomain: "farmers-app-70a3a.firebaseapp.com",
+  projectId: "farmers-app-70a3a"
+});
+const db = getFirestore(app);
+
+// ═══ Estado global ═══
+const Portal = {
+  token: null,
+  tokenData: null,
+  productos: [],
+  inventario: {},
+  comprometido: {},
+  productImages: {},
+  marcasDisponibles: [],
+  carrito: {},
+  filtroMarca: 'todos',
+  filtroBusqueda: '',
+  clienteForm: null,
+  pedidoEmitido: null,
+  logoB64: null,
+};
+
+// ═══ Navegación entre pantallas ═══
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function mostrarError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  showScreen('screen-error');
+}
+
+// ═══ Validar token (con timeout de seguridad de 15 segundos) ═══
+async function validarToken() {
+  // Timeout de seguridad: si algo falla silenciosamente, mostrar error en 15s
+  const safetyTimeout = setTimeout(() => {
+    if (document.getElementById('screen-loading').classList.contains('active')) {
+      console.error('[Portal] Timeout: Firebase no respondió en 15 segundos');
+      mostrarError('No se pudo conectar con el servidor. Verifica tu conexión a internet, espera unos segundos y recarga la página.');
+    }
+  }, 15000);
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (!token || token.length < 6) {
+      clearTimeout(safetyTimeout);
+      mostrarError('No se proporcionó un link válido. Contacta a Farmers C.A. para obtener tu link personalizado al 0412-0445797 o farmersve@gmail.com.');
+      return;
+    }
+    Portal.token = token;
+
+    // Cargar logo Farmers del catálogo (doc 'config/logo' que guardamos desde admin)
+    try {
+      const logoDoc = await getDoc(doc(db, 'data', 'config_logo'));
+      if (logoDoc.exists() && logoDoc.data().v) {
+        Portal.logoB64 = logoDoc.data().v;
+        document.getElementById('splash-logo').src = Portal.logoB64;
+        document.getElementById('form-logo').src = Portal.logoB64;
+        document.getElementById('header-logo').src = Portal.logoB64;
+      }
+    } catch(e) { console.warn('Sin logo en Firestore'); }
+
+    // Validar token
+    const tokenDoc = await getDoc(doc(db, 'portal_tokens', token));
+    if (!tokenDoc.exists()) {
+      clearTimeout(safetyTimeout);
+      mostrarError('Link no reconocido. Por favor verifica el link o solicita uno nuevo a Farmers C.A.');
+      return;
+    }
+    const data = tokenDoc.data();
+    if (data.activo === false) {
+      clearTimeout(safetyTimeout);
+      mostrarError('Este link ha sido desactivado. Por favor contacta a Farmers C.A. para reactivarlo o solicitar uno nuevo.');
+      return;
+    }
+    Portal.tokenData = data;
+
+    // Registrar último acceso (fire-and-forget)
+    setDoc(doc(db, 'portal_tokens', token), { ultimoAcceso: serverTimestamp() }, { merge: true }).catch(() => {});
+
+    // Pre-llenar datos
+    if (data.clienteNombre) {
+      document.getElementById('form-welcome-title').textContent = 'Bienvenido';
+      document.getElementById('form-client-name').textContent = data.clienteNombre;
+      document.getElementById('cli-razon').value = data.clienteNombre || '';
+      document.getElementById('cli-rif').value = data.rifEsperado || '';
+    }
+
+    clearTimeout(safetyTimeout);
+    showScreen('screen-form');
+  } catch (e) {
+    clearTimeout(safetyTimeout);
+    console.error('[Portal] Error validando token:', e);
+    mostrarError('Error al validar el link: ' + (e.message || 'error desconocido') + '. Por favor verifica tu conexión e intenta de nuevo.');
+  }
+}
+
+// ═══ Formulario de datos ═══
+document.getElementById('form-submit').addEventListener('click', async () => {
+  const nombre = document.getElementById('cli-nombre').value.trim();
+  const razon = document.getElementById('cli-razon').value.trim();
+  const rif = document.getElementById('cli-rif').value.trim();
+  const tel = document.getElementById('cli-telefono').value.trim();
+
+  // Validación
+  let hasError = false;
+  [['cli-nombre', nombre, 3], ['cli-razon', razon, 3], ['cli-rif', rif, 7], ['cli-telefono', tel, 7]].forEach(([id, v, min]) => {
+    const el = document.getElementById(id);
+    if (!v || v.length < min) { el.classList.add('error'); hasError = true; }
+    else el.classList.remove('error');
+  });
+
+  if (hasError) {
+    alert('Por favor, completa todos los campos correctamente.');
+    return;
+  }
+
+  Portal.clienteForm = { nombre, razon, rif, telefono: tel };
+
+  // Cargar catálogo
+  const btn = document.getElementById('form-submit');
+  btn.disabled = true;
+  btn.textContent = 'Cargando catálogo...';
+
+  try {
+    await cargarCatalogo();
+    mostrarCatalogo();
+  } catch (e) {
+    console.error(e);
+    alert('Error al cargar el catálogo. Por favor intenta de nuevo.');
+    btn.disabled = false;
+    btn.textContent = 'Acceder al catálogo';
+  }
+});
+
+// ═══ Cargar catálogo desde Firestore ═══
+async function cargarCatalogo() {
+  // Productos
+  const prodDoc = await getDoc(doc(db, 'data', 'products'));
+  if (!prodDoc.exists() || !prodDoc.data().v) {
+    throw new Error('Sin catálogo disponible');
+  }
+  Portal.productos = JSON.parse(prodDoc.data().v);
+
+  // Inventario
+  try {
+    const invDoc = await getDoc(doc(db, 'data', 'inventory'));
+    if (invDoc.exists() && invDoc.data().v) {
+      Portal.inventario = JSON.parse(invDoc.data().v);
+    }
+  } catch(e) { console.warn('Sin inventario'); }
+
+  // Comprometido
+  try {
+    const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
+    if (compDoc.exists() && compDoc.data().v) {
+      Portal.comprometido = JSON.parse(compDoc.data().v);
+    }
+  } catch(e) { console.warn('Sin comprometido'); }
+
+  // Imágenes
+  try {
+    const imgsDoc = await getDoc(doc(db, 'data', 'img_index'));
+    if (imgsDoc.exists() && imgsDoc.data().v) {
+      Portal.productImages = JSON.parse(imgsDoc.data().v);
+    }
+  } catch(e) { console.warn('Sin imágenes'); }
+
+  // Aplicar configuración: filtrar por marcas visibles
+  const cfg = Portal.tokenData.configVista || {};
+  if (cfg.marcasVisibles && cfg.marcasVisibles.length > 0) {
+    Portal.productos = Portal.productos.filter(p =>
+      cfg.marcasVisibles.includes(String(p.br || '').toUpperCase())
+    );
+  }
+
+  // Ocultar agotados si configurado
+  if (cfg.ocultarAgotados) {
+    Portal.productos = Portal.productos.filter(p => {
+      const disp = disponibleProducto(p.r);
+      return disp > 0;
+    });
+  }
+
+  // Sort alfanumérico por REF
+  Portal.productos.sort((a, b) =>
+    String(a.r || '').localeCompare(String(b.r || ''), 'es', { numeric: true, sensitivity: 'base' })
+  );
+
+  // Marcas únicas para filtros
+  const mSet = new Set();
+  Portal.productos.forEach(p => { if (p.br) mSet.add(String(p.br).toUpperCase()); });
+  Portal.marcasDisponibles = Array.from(mSet).sort();
+}
+
+function disponibleProducto(ref) {
+  const real = parseInt(Portal.inventario[ref] || 0);
+  const comp = parseInt(Portal.comprometido[ref] || 0);
+  return Math.max(0, real - comp);
+}
+
+function getPrecio(p) {
+  const moneda = Portal.tokenData.configVista?.moneda || 'USD';
+  if (moneda === 'BCV') return parseFloat(p.bv || p.u || 0);
+  if (moneda === 'TF') return parseFloat(p.t || p.u || 0);
+  return parseFloat(p.u || 0);
+}
+
+function simboloMoneda() {
+  const moneda = Portal.tokenData.configVista?.moneda || 'USD';
+  if (moneda === 'BCV') return 'Bs ';
+  if (moneda === 'TF') return 'Bs ';
+  return '$';
+}
+
+// ═══ Mostrar catálogo ═══
+function mostrarCatalogo() {
+  document.getElementById('header-client-name').textContent = Portal.clienteForm.razon;
+
+  // Pills de filtros de marca
+  const pillsContainer = document.getElementById('filter-pills');
+  pillsContainer.innerHTML = '<button class="filter-pill active" data-filter="todos">Todos</button>';
+  Portal.marcasDisponibles.forEach(m => {
+    const p = document.createElement('button');
+    p.className = 'filter-pill';
+    p.dataset.filter = m;
+    p.textContent = m;
+    pillsContainer.appendChild(p);
+  });
+  pillsContainer.querySelectorAll('.filter-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      pillsContainer.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      Portal.filtroMarca = p.dataset.filter;
+      renderProductos();
+    });
+  });
+
+  // Buscador
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    Portal.filtroBusqueda = e.target.value.toLowerCase().trim();
+    renderProductos();
+  });
+
+  renderProductos();
+  showScreen('screen-catalog');
+}
+
+function renderProductos() {
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = '';
+  const noPd = document.getElementById('no-products');
+
+  const filtrados = Portal.productos.filter(p => {
+    // Filtro marca
+    if (Portal.filtroMarca !== 'todos' && String(p.br || '').toUpperCase() !== Portal.filtroMarca) return false;
+    // Filtro búsqueda
+    if (Portal.filtroBusqueda) {
+      const q = Portal.filtroBusqueda;
+      if (!String(p.r || '').toLowerCase().includes(q) &&
+          !String(p.d || '').toLowerCase().includes(q) &&
+          !String(p.br || '').toLowerCase().includes(q) &&
+          !String(p.b || '').toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (filtrados.length === 0) {
+    noPd.style.display = 'block';
+    return;
+  }
+  noPd.style.display = 'none';
+
+  filtrados.forEach(p => {
+    const card = crearCardProducto(p);
+    grid.appendChild(card);
+  });
+}
+
+function crearCardProducto(p) {
+  const disp = disponibleProducto(p.r);
+  const mostrarStock = Portal.tokenData.configVista?.mostrarStock !== 'oculto';
+  const precio = getPrecio(p);
+  const simb = simboloMoneda();
+  const img = Portal.productImages[p.r];
+  const qtyCart = Portal.carrito[p.r]?.qty || 0;
+
+  let stockBadge = '';
+  if (mostrarStock) {
+    if (Portal.tokenData.configVista?.mostrarStock === 'exacto') {
+      if (disp === 0) stockBadge = '<span class="pc-stock-badge pc-stock-out">Agotado</span>';
+      else if (disp < 10) stockBadge = '<span class="pc-stock-badge pc-stock-low">Stock: ' + disp + '</span>';
+      else stockBadge = '<span class="pc-stock-badge pc-stock-good">Stock: ' + disp + '</span>';
+    } else {
+      // disponibilidad simple
+      if (disp === 0) stockBadge = '<span class="pc-stock-badge pc-stock-out">Agotado</span>';
+      else if (disp < 10) stockBadge = '<span class="pc-stock-badge pc-stock-low">Pocas uds</span>';
+      else stockBadge = '<span class="pc-stock-badge pc-stock-good">Disponible</span>';
+    }
+  }
+
+  const card = document.createElement('div');
+  card.className = 'product-card';
+  card.innerHTML =
+    '<div class="pc-brand-bar"></div>' +
+    '<div class="pc-image">' +
+      (img ? '<img src="' + img + '" alt="' + p.r + '">' : '<span class="pc-image-placeholder">' + (p.br || 'Sin imagen') + '</span>') +
+    '</div>' +
+    '<div class="pc-body">' +
+      '<div class="pc-ref">' + (p.r || '') + '</div>' +
+      '<div class="pc-desc">' + (p.d || '') + '</div>' +
+      '<div class="pc-meta">' + (p.br ? p.br + ' · ' : '') + (p.e || '') + '</div>' +
+      '<div class="pc-price-row">' +
+        '<span class="pc-price">' + simb + precio.toFixed(2) + '</span>' +
+        stockBadge +
+      '</div>' +
+      '<div class="pc-controls">' +
+        '<div class="pc-qty-group">' +
+          '<button class="pc-qty-btn" data-action="dec">-</button>' +
+          '<input type="number" class="pc-qty-input" value="' + qtyCart + '" min="0" ' + (disp === 0 ? 'disabled' : '') + '>' +
+          '<button class="pc-qty-btn" data-action="inc" ' + (disp === 0 ? 'disabled' : '') + '>+</button>' +
+        '</div>' +
+        '<button class="pc-add-btn ' + (qtyCart > 0 ? 'added' : '') + '" ' + (disp === 0 ? 'disabled' : '') + ' data-action="add">' +
+          (qtyCart > 0 ? '✓ ' + qtyCart : 'Agregar') +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+  const qtyInput = card.querySelector('.pc-qty-input');
+  const addBtn = card.querySelector('[data-action="add"]');
+  const decBtn = card.querySelector('[data-action="dec"]');
+  const incBtn = card.querySelector('[data-action="inc"]');
+
+  decBtn.addEventListener('click', () => {
+    const v = Math.max(0, (parseInt(qtyInput.value) || 0) - 1);
+    qtyInput.value = v;
+  });
+  incBtn.addEventListener('click', () => {
+    const v = (parseInt(qtyInput.value) || 0) + 1;
+    if (disp > 0 && v > disp) {
+      alert('Solo hay ' + disp + ' unidades disponibles de ' + p.r);
+      qtyInput.value = disp;
+      return;
+    }
+    qtyInput.value = v;
+  });
+  addBtn.addEventListener('click', () => {
+    const q = parseInt(qtyInput.value) || 0;
+    if (q <= 0) {
+      delete Portal.carrito[p.r];
+    } else {
+      if (disp > 0 && q > disp) {
+        alert('Solo hay ' + disp + ' unidades disponibles de ' + p.r);
+        qtyInput.value = disp;
+        return;
+      }
+      Portal.carrito[p.r] = { producto: p, qty: q, precio: precio };
+    }
+    actualizarCarritoUI();
+    // Re-render solo esta card
+    const newCard = crearCardProducto(p);
+    card.replaceWith(newCard);
+  });
+
+  return card;
+}
+
+// ═══ Actualizar UI carrito ═══
+function actualizarCarritoUI() {
+  const items = Object.values(Portal.carrito);
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const totalUSD = items.reduce((s, i) => s + i.qty * i.precio, 0);
+
+  document.getElementById('cart-badge').textContent = totalQty;
+
+  const bbar = document.getElementById('bottom-bar');
+  if (totalQty > 0) {
+    bbar.classList.add('active');
+    document.getElementById('bb-items').textContent = totalQty;
+    document.getElementById('bb-total').textContent = totalUSD.toFixed(2);
+  } else {
+    bbar.classList.remove('active');
+  }
+}
+
+// ═══ Abrir modal carrito ═══
+document.getElementById('header-cart-btn').addEventListener('click', abrirCarrito);
+document.getElementById('bb-view-cart').addEventListener('click', abrirCarrito);
+document.getElementById('cart-close').addEventListener('click', () => {
+  document.getElementById('cart-modal').classList.remove('active');
+});
+
+function abrirCarrito() {
+  const body = document.getElementById('cart-body');
+  const footer = document.getElementById('cart-footer');
+  const items = Object.values(Portal.carrito);
+
+  if (items.length === 0) {
+    body.innerHTML = '<div class="cart-empty">Tu carrito está vacío.<br>Agrega productos desde el catálogo.</div>';
+    footer.innerHTML = '';
+  } else {
+    const simb = simboloMoneda();
+    body.innerHTML = items.map(i => {
+      const sub = i.qty * i.precio;
+      return '<div class="cart-item">' +
+        '<div class="ci-info">' +
+          '<div class="ci-ref">' + i.producto.r + '</div>' +
+          '<div class="ci-desc">' + i.producto.d + '</div>' +
+          '<div class="ci-price-qty">' +
+            '<span>' + simb + i.precio.toFixed(2) + ' × ' + i.qty + '</span>' +
+            '<span class="ci-subtotal">' + simb + sub.toFixed(2) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<button class="ci-remove" data-ref="' + i.producto.r + '">Quitar</button>' +
+      '</div>';
+    }).join('');
+
+    body.querySelectorAll('.ci-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ref = btn.dataset.ref;
+        delete Portal.carrito[ref];
+        actualizarCarritoUI();
+        abrirCarrito();
+      });
+    });
+
+    const total = items.reduce((s, i) => s + i.qty * i.precio, 0);
+    const totalQty = items.reduce((s, i) => s + i.qty, 0);
+    footer.innerHTML =
+      '<div class="cart-total-row"><span>Productos:</span><span>' + totalQty + '</span></div>' +
+      '<div class="cart-total-row total"><span>Total:</span><span>' + simb + total.toFixed(2) + '</span></div>' +
+      '<button class="cart-send-btn" id="btn-send-order">Enviar pedido a Farmers C.A.</button>';
+
+    document.getElementById('btn-send-order').addEventListener('click', enviarPedido);
+  }
+
+  document.getElementById('cart-modal').classList.add('active');
+}
+
+// ═══ Enviar pedido ═══
+async function enviarPedido() {
+  const btn = document.getElementById('btn-send-order');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    const items = Object.values(Portal.carrito).map(i => ({
+      ref: i.producto.r,
+      desc: i.producto.d,
+      qty: i.qty,
+      precioMostrado: i.precio,
+      codigoBarra: i.producto.b || '',
+      marca: i.producto.br || '',
+    }));
+
+    const total = items.reduce((s, i) => s + i.qty * i.precioMostrado, 0);
+
+    const pedido = {
+      token: Portal.token,
+      tokenClienteNombre: Portal.tokenData.clienteNombre || '',
+      cliente: Portal.clienteForm,
+      items: items,
+      totalQty: items.reduce((s, i) => s + i.qty, 0),
+      total: total,
+      moneda: Portal.tokenData.configVista?.moneda || 'USD',
+      fecha: serverTimestamp(),
+      fechaStr: new Date().toISOString(),
+      estado: 'pendiente',
+      sincronizadoAFarmers: false,
+    };
+
+    const ref = await addDoc(collection(db, 'portal_pedidos'), pedido);
+    Portal.pedidoEmitido = { id: ref.id, ...pedido, fechaLocal: new Date() };
+
+    document.getElementById('cart-modal').classList.remove('active');
+    document.getElementById('confirm-order-num').textContent = 'PORTAL-' + ref.id.substring(0, 8).toUpperCase();
+    showScreen('screen-confirm');
+  } catch (e) {
+    console.error(e);
+    alert('Error al enviar el pedido. Por favor verifica tu conexión e intenta de nuevo.');
+    btn.disabled = false;
+    btn.textContent = 'Enviar pedido a Farmers C.A.';
+  }
+}
+
+// ═══ Descargas PDF/Excel ═══
+document.getElementById('btn-download-pdf').addEventListener('click', descargarPDF);
+document.getElementById('btn-download-excel').addEventListener('click', descargarExcel);
+document.getElementById('btn-new-order').addEventListener('click', () => {
+  Portal.carrito = {};
+  Portal.pedidoEmitido = null;
+  actualizarCarritoUI();
+  renderProductos();
+  showScreen('screen-catalog');
+});
+
+function descargarPDF() {
+  const p = Portal.pedidoEmitido;
+  if (!p) return;
+  const simb = p.moneda === 'USD' ? '$' : 'Bs ';
+  const fecha = (p.fechaLocal || new Date()).toLocaleDateString('es-VE');
+
+  const html = `
+    <div style="font-family:sans-serif;padding:20px;color:#1e293b;max-width:800px;">
+      ${Portal.logoB64 ? '<img src="' + Portal.logoB64 + '" style="height:60px;margin-bottom:14px;">' : ''}
+      <h1 style="color:#1B1F6B;margin:0 0 4px 0;font-size:1.4rem;">PEDIDO DEL PORTAL CLIENTE</h1>
+      <p style="color:#64748b;font-size:0.85rem;margin:0 0 14px 0;">N° PORTAL-${p.id.substring(0, 8).toUpperCase()} · ${fecha}</p>
+      <table style="width:100%;font-size:0.78rem;margin-bottom:14px;">
+        <tr><td style="padding:3px 0;font-weight:700;">Cliente:</td><td>${p.cliente.nombre}</td></tr>
+        <tr><td style="padding:3px 0;font-weight:700;">Razón social:</td><td>${p.cliente.razon}</td></tr>
+        <tr><td style="padding:3px 0;font-weight:700;">RIF:</td><td>${p.cliente.rif}</td></tr>
+        <tr><td style="padding:3px 0;font-weight:700;">Teléfono:</td><td>${p.cliente.telefono}</td></tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+        <thead>
+          <tr style="background:#1B1F6B;color:#fff;">
+            <th style="padding:7px;text-align:left;">REF</th>
+            <th style="padding:7px;text-align:left;">DESCRIPCIÓN</th>
+            <th style="padding:7px;text-align:center;">CANT</th>
+            <th style="padding:7px;text-align:right;">PRECIO</th>
+            <th style="padding:7px;text-align:right;">SUBTOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${p.items.map((it, idx) => `
+            <tr style="background:${idx % 2 === 0 ? '#fff' : '#f8fafc'};">
+              <td style="padding:5px 7px;font-family:monospace;font-weight:700;">${it.ref}</td>
+              <td style="padding:5px 7px;">${it.desc}</td>
+              <td style="padding:5px 7px;text-align:center;font-weight:700;">${it.qty}</td>
+              <td style="padding:5px 7px;text-align:right;">${simb}${it.precioMostrado.toFixed(2)}</td>
+              <td style="padding:5px 7px;text-align:right;font-weight:700;">${simb}${(it.qty * it.precioMostrado).toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:#1B1F6B;color:#fff;">
+            <td colspan="4" style="padding:10px;text-align:right;font-weight:800;">TOTAL:</td>
+            <td style="padding:10px;text-align:right;font-weight:900;font-size:1rem;">${simb}${p.total.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  document.body.appendChild(el);
+  const opt = {
+    margin: 0.3,
+    filename: `FARMERS - PEDIDO PORTAL ${p.cliente.razon} - ${fecha}.pdf`,
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(el).save().then(() => el.remove());
+}
+
+function descargarExcel() {
+  const p = Portal.pedidoEmitido;
+  if (!p) return;
+  const simb = p.moneda === 'USD' ? '$' : 'Bs ';
+  const fecha = (p.fechaLocal || new Date()).toLocaleDateString('es-VE');
+
+  const data = [
+    ['FARMERS C.A. — PEDIDO PORTAL CLIENTE'],
+    ['N° Pedido:', 'PORTAL-' + p.id.substring(0, 8).toUpperCase(), 'Fecha:', fecha],
+    ['Cliente:', p.cliente.nombre],
+    ['Razón social:', p.cliente.razon],
+    ['RIF:', p.cliente.rif],
+    ['Teléfono:', p.cliente.telefono],
+    [],
+    ['REFERENCIA', 'DESCRIPCIÓN', 'CÓD. BARRA', 'MARCA', 'CANTIDAD', 'PRECIO ' + p.moneda, 'SUBTOTAL ' + p.moneda],
+    ...p.items.map(it => [
+      it.ref, it.desc, it.codigoBarra || '', it.marca || '',
+      it.qty, it.precioMostrado, it.qty * it.precioMostrado
+    ]),
+    [],
+    ['', '', '', '', 'TOTAL:', '', p.total]
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Pedido');
+  XLSX.writeFile(wb, `FARMERS - PEDIDO PORTAL ${p.cliente.razon} - ${fecha}.xlsx`);
+}
+
+// ═══ Manejo global de errores: si algo falla catastróficamente, mostrar mensaje ═══
+window.addEventListener('error', function(ev) {
+  console.error('[Portal] Error global:', ev.error || ev.message);
+  if (document.getElementById('screen-loading') &&
+      document.getElementById('screen-loading').classList.contains('active')) {
+    // Solo si estamos aún en splash
+    try {
+      document.getElementById('error-msg').textContent = 'Error al cargar el portal: ' + (ev.error?.message || ev.message || 'desconocido') + '. Por favor recarga la página.';
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-error').classList.add('active');
+    } catch(e) {}
+  }
+});
+window.addEventListener('unhandledrejection', function(ev) {
+  console.error('[Portal] Promise rechazada:', ev.reason);
+});
+
+// ═══ Inicio ═══
+validarToken();
+</script>
+</body>
+</html>

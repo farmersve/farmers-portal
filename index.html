@@ -73,6 +73,93 @@
   .form-btn:active { opacity: 0.9; transform: translateY(1px); }
   .form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* ─── Barra de progreso de carga del catálogo ─── */
+  .load-progress {
+    margin-top: 24px;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+    border-radius: 14px;
+    border: 1.5px solid #c7d2fe;
+    box-shadow: 0 4px 16px rgba(27,31,107,.08);
+    animation: lpFadeIn .3s ease;
+  }
+  @keyframes lpFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .lp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .lp-title {
+    font-size: .78rem;
+    font-weight: 900;
+    color: var(--f-navy);
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .lp-percent {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--f-orange);
+    font-family: 'Barlow Condensed', 'Impact', sans-serif;
+    letter-spacing: 1px;
+    line-height: 1;
+    min-width: 60px;
+    text-align: right;
+  }
+  .lp-track {
+    height: 10px;
+    background: rgba(27,31,107,.1);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .lp-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--f-navy) 0%, var(--f-violet) 50%, var(--f-orange) 100%);
+    border-radius: 999px;
+    transition: width .4s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .lp-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    animation: lpShine 1.4s linear infinite;
+  }
+  @keyframes lpShine {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .lp-status {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--f-navy);
+    margin-top: 10px;
+    letter-spacing: .4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .lp-status .lp-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--f-orange);
+    border-radius: 50%;
+    animation: lpBlink 1s ease infinite;
+  }
+  @keyframes lpBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .3; transform: scale(.7); }
+  }
+
   /* ─── Catálogo / Header sticky ─── */
   .catalog-header { background: var(--f-navy); color: #fff; padding: 12px 18px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
   .ch-logo { height: 36px; width: auto; background: #fff; border-radius: 7px; padding: 3px 7px; }
@@ -522,6 +609,18 @@
     <input type="tel" id="cli-telefono" class="form-input" placeholder="Ej: 0414-1234567" autocomplete="tel" required>
 
     <button id="form-submit" class="form-btn">🛒 Acceder al catálogo</button>
+
+    <!-- ══════════ Barra de progreso de carga ══════════ -->
+    <div id="load-progress" class="load-progress" style="display:none;">
+      <div class="lp-header">
+        <div class="lp-title">CARGANDO CATÁLOGO</div>
+        <div class="lp-percent" id="lp-percent">0%</div>
+      </div>
+      <div class="lp-track">
+        <div class="lp-fill" id="lp-fill"></div>
+      </div>
+      <div class="lp-status" id="lp-status">Iniciando...</div>
+    </div>
   </div>
 </div>
 
@@ -755,6 +854,19 @@ async function validarToken() {
 }
 
 // ═══ Formulario de datos ═══
+// ═══ Helper de progreso ═══
+function setLoadProgress(pct, status) {
+  const fill = document.getElementById('lp-fill');
+  const percent = document.getElementById('lp-percent');
+  const stat = document.getElementById('lp-status');
+  const p = Math.max(0, Math.min(100, Math.round(pct)));
+  if (fill) fill.style.width = p + '%';
+  if (percent) percent.textContent = p + '%';
+  if (stat && status != null) {
+    stat.innerHTML = '<span class="lp-dot"></span>' + status;
+  }
+}
+
 document.getElementById('form-submit').addEventListener('click', async () => {
   const nombre = document.getElementById('cli-nombre').value.trim();
   const razon = document.getElementById('cli-razon').value.trim();
@@ -776,64 +888,93 @@ document.getElementById('form-submit').addEventListener('click', async () => {
 
   Portal.clienteForm = { nombre, razon, rif, telefono: tel };
 
-  // Cargar catálogo
+  // Ocultar botón y mostrar barra de progreso
   const btn = document.getElementById('form-submit');
-  btn.disabled = true;
-  btn.textContent = 'Cargando catálogo...';
+  const progressBox = document.getElementById('load-progress');
+  btn.style.display = 'none';
+  progressBox.style.display = 'block';
+  setLoadProgress(0, 'Iniciando carga...');
 
   try {
     await cargarCatalogo();
+    setLoadProgress(100, '✓ Catálogo listo');
+    // Pequeña pausa para que el usuario vea el 100%
+    await new Promise(r => setTimeout(r, 400));
     mostrarCatalogo();
   } catch (e) {
     console.error(e);
     alert('Error al cargar el catálogo. Por favor intenta de nuevo.');
+    btn.style.display = 'block';
+    progressBox.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = 'Acceder al catálogo';
+    btn.textContent = '🛒 Acceder al catálogo';
   }
 });
 
 // ═══ Cargar catálogo desde Firestore ═══
+//
+// Etapas ponderadas del progreso total (100%):
+//   Productos        →  0-15%
+//   Inventario       → 15-25%
+//   Comprometido    → 25-35%
+//   Ordenada        → 35-40%
+//   Imágenes        → 40-100% (lo más pesado)
+//
 async function cargarCatalogo() {
   // Config del token (marcas, moneda, mostrar stock, ocultar agotados, Ordenada on/off)
   const cfg = Portal.tokenData.configVista || {};
 
-  // Productos
+  // ═══ ETAPA 1: Productos ═══
+  setLoadProgress(5, 'Descargando catálogo de productos...');
   const prodDoc = await getDoc(doc(db, 'data', 'products'));
   if (!prodDoc.exists() || !prodDoc.data().v) {
     throw new Error('Sin catálogo disponible');
   }
   Portal.productos = JSON.parse(prodDoc.data().v);
+  setLoadProgress(15, Portal.productos.length + ' productos cargados');
 
-  // Inventario
+  // ═══ ETAPA 2: Inventario ═══
+  setLoadProgress(18, 'Consultando inventario en tiempo real...');
   try {
     const invDoc = await getDoc(doc(db, 'data', 'inventory'));
     if (invDoc.exists() && invDoc.data().v) {
       Portal.inventario = JSON.parse(invDoc.data().v);
     }
   } catch(e) { console.warn('Sin inventario'); }
+  setLoadProgress(25, 'Inventario sincronizado');
 
-  // Comprometido
+  // ═══ ETAPA 3: Comprometido ═══
+  setLoadProgress(28, 'Verificando reservas activas...');
   try {
     const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
     if (compDoc.exists() && compDoc.data().v) {
       Portal.comprometido = JSON.parse(compDoc.data().v);
     }
   } catch(e) { console.warn('Sin comprometido'); }
+  setLoadProgress(35, 'Disponibilidad calculada');
 
-  // Ordenada (farmers_pt_data) — solo si el token lo habilita
+  // ═══ ETAPA 4: Ordenada (farmers_pt_data) — solo si el token lo habilita ═══
   if (cfg.mostrarOrdenada) {
+    setLoadProgress(37, 'Cargando mercancía en camino...');
     try {
+      console.log('[PORTAL] Token tiene mostrarOrdenada=true — leyendo pt_data de Firestore...');
       const ptDoc = await getDoc(doc(db, 'data', 'pt_data'));
       if (ptDoc.exists() && ptDoc.data().v) {
         Portal.ordenada = JSON.parse(ptDoc.data().v);
+        const totalRefs = Object.keys(Portal.ordenada).length;
+        const conOrd = Object.values(Portal.ordenada).filter(x => parseInt(x && x.exOrdenada || 0) > 0).length;
+        console.log('[PORTAL] pt_data cargado: ' + totalRefs + ' refs totales, ' + conOrd + ' con Ordenada > 0');
+        if (conOrd === 0) {
+          console.warn('[PORTAL] ⚠ pt_data está vacío de Ordenada — el admin no ha cargado cantidades o no ha publicado');
+        }
+      } else {
+        console.warn('[PORTAL] ⚠ No existe doc data/pt_data en Firestore — el admin nunca publicó Ordenada');
       }
-    } catch(e) { console.warn('Sin pt_data'); }
+    } catch(e) { console.warn('[PORTAL] Error leyendo pt_data:', e); }
   }
+  setLoadProgress(40, 'Preparando galería de imágenes...');
 
-  // Imágenes — Sistema DUAL idéntico al admin:
-  //  1) Colección NUEVA 'img/{ref}' (1 doc por imagen, sin límites)
-  //  2) Sistema LEGACY 'data/images_N' (chunks con JSON combinado)
-  // Lazy: se cargan al entrar al catálogo con barra de progreso
+  // ═══ ETAPA 5: Imágenes (40% → 100%) ═══
   await cargarImagenesProductos();
 
   // Aplicar configuración: filtrar por marcas visibles
@@ -867,25 +1008,34 @@ async function cargarCatalogo() {
 // Sistema LEGACY: 'data/images_N' chunks →  JSON combinado, compatibilidad
 async function cargarImagenesProductos() {
   const combined = {};
-  const progEl = document.getElementById('img-progress');
-  const showProg = (txt) => { if (progEl) { progEl.textContent = txt; progEl.classList.add('active'); } };
-  const hideProg = () => { if (progEl) progEl.classList.remove('active'); };
 
-  showProg('📷 Cargando imágenes...');
+  // Mapeo del progreso: imágenes ocupan 40% → 100% del total (60 puntos)
+  // Distribución interna: sistema nuevo 40 puntos (40→80), legacy 20 puntos (80→100)
+  const PROG_START = 40;
+  const PROG_NEW_END = 80;
+  const PROG_END = 100;
+
+  setLoadProgress(PROG_START, 'Descargando imágenes (sistema principal)...');
 
   // ── Sistema NUEVO: colección 'img' (1 doc por ref) ──
   try {
     const snap = await getDocs(collection(db, 'img'));
     let loaded = 0;
+    const total = snap.size || 1;
     snap.forEach(d => {
       if (d.data() && d.data().v) combined[d.id] = d.data().v;
       loaded++;
-      if (loaded % 50 === 0) showProg('📷 ' + loaded + '/' + snap.size + ' imágenes...');
+      if (loaded % 20 === 0 || loaded === total) {
+        const pct = PROG_START + ((loaded / total) * (PROG_NEW_END - PROG_START));
+        setLoadProgress(pct, 'Imágenes principales: ' + loaded + ' / ' + total);
+      }
     });
     console.log('[Portal] Imágenes (nuevo sistema img/):', Object.keys(combined).length);
   } catch (e) {
     console.warn('[Portal] fbGetImages (nuevo):', e);
   }
+
+  setLoadProgress(PROG_NEW_END, 'Verificando imágenes adicionales...');
 
   // ── Sistema LEGACY: chunks 'data/images_N' ──
   try {
@@ -903,7 +1053,8 @@ async function cargarImagenesProductos() {
             });
           } catch(ep) {}
         }
-        showProg('📷 Cargando legacy ' + (i+1) + '/' + numChunks + '...');
+        const pct = PROG_NEW_END + (((i + 1) / numChunks) * (PROG_END - PROG_NEW_END));
+        setLoadProgress(pct, 'Imágenes legacy: ' + (i+1) + ' / ' + numChunks);
       }
     }
   } catch (e) {
@@ -913,8 +1064,7 @@ async function cargarImagenesProductos() {
   Portal.productImages = combined;
   console.log('[Portal] Total imágenes cargadas:', Object.keys(combined).length);
 
-  // Ocultar progress tras 1 segundo
-  setTimeout(hideProg, 1000);
+  setLoadProgress(99, 'Finalizando... ' + Object.keys(combined).length + ' imágenes listas');
 }
 
 // ═══ Buscar imagen por REF, código interno o código de barras ═══

@@ -18,11 +18,11 @@
     --f-navy: #1B1F6B;
     --f-orange: #F47B3E;
     --f-violet: #9B6FD4;
-    --f-bg: #f8fafc;
-    --f-bg-alt: #f1f5f9;
+    --f-bg: #f1f5f9;
+    --f-bg-alt: #e8ecf3;
     --f-text: #1e293b;
     --f-text-muted: #64748b;
-    --f-border: #e2e8f0;
+    --f-border: #d9dde8;
     --f-success: #059669;
     --f-danger: #dc2626;
     --f-warn: #d97706;
@@ -59,13 +59,13 @@
   .error-desc { font-size: 0.9rem; color: var(--f-text-muted); line-height: 1.5; }
 
   /* ─── Formulario datos cliente ─── */
-  .form-card { background: #fff; border-radius: 20px; padding: 32px 28px; max-width: 520px; margin: 24px auto; box-shadow: 0 12px 40px rgba(27,31,107,0.12), 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(27,31,107,0.06); }
-  .form-header { text-align: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid var(--f-bg-alt); }
-  .form-logo { width: 100px; height: auto; margin: 0 auto 14px; display: block; }
-  .form-welcome { font-size: 1.4rem; font-weight: 900; color: var(--f-navy); margin: 0 0 6px 0; letter-spacing: 1px; text-transform: uppercase; }
-  .form-client-name { font-size: 1rem; color: var(--f-orange); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
-  .form-intro-msg { font-size: .82rem; color: var(--f-text-muted); line-height: 1.5; margin-top: 10px; padding: 10px 14px; background: linear-gradient(135deg, #f0f4ff, #f8faff); border-radius: 10px; border-left: 3px solid var(--f-orange); text-align: left; }
-  .form-label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--f-text); margin: 16px 0 6px 0; text-transform: uppercase; letter-spacing: 1px; }
+  .form-card { background: #fff; border-radius: 20px; padding: 32px 28px; max-width: 480px; margin: 40px auto; box-shadow: 0 12px 40px rgba(27,31,107,0.12), 0 4px 12px rgba(0,0,0,0.04); border: 1px solid rgba(27,31,107,0.06); }
+  .form-header { text-align: center; margin-bottom: 20px; }
+  .form-logo { width: 110px; height: auto; margin: 0 auto 16px; display: block; }
+  .form-welcome { font-size: 1.5rem; font-weight: 900; color: var(--f-navy); margin: 0 0 6px 0; letter-spacing: 2px; text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif; }
+  .form-client-name { font-size: 1rem; color: var(--f-orange); font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin: 0; }
+  .form-divider { height: 3px; width: 60px; background: linear-gradient(90deg, var(--f-navy), var(--f-orange)); margin: 18px auto 6px; border-radius: 999px; }
+  .form-label { display: block; font-size: 0.68rem; font-weight: 800; color: var(--f-navy); margin: 16px 0 6px 0; text-transform: uppercase; letter-spacing: 1.2px; }
   .form-input { width: 100%; padding: 13px 15px; border: 1.5px solid var(--f-border); border-radius: 11px; font-size: 0.92rem; transition: all 0.2s; background: #fff; font-weight: 600; }
   .form-input:focus { outline: none; border-color: var(--f-navy); box-shadow: 0 0 0 3px rgba(27,31,107,0.1); }
   .form-input.error { border-color: var(--f-danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
@@ -73,111 +73,327 @@
   .form-btn:active { opacity: 0.9; transform: translateY(1px); }
   .form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* ─── Catálogo / Header ─── */
-  .catalog-header { background: var(--f-navy); color: #fff; padding: 14px 16px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-  .ch-logo { height: 32px; width: auto; background: #fff; border-radius: 6px; padding: 2px 6px; }
-  .ch-info { flex: 1; margin-left: 10px; min-width: 0; }
-  .ch-title { font-size: 0.85rem; font-weight: 700; margin: 0; line-height: 1.2; }
-  .ch-client { font-size: 0.65rem; opacity: 0.8; margin: 2px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ch-cart-btn { background: var(--f-orange); color: #fff; border: none; border-radius: 20px; padding: 8px 14px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
-  .ch-cart-badge { background: #fff; color: var(--f-orange); border-radius: 999px; padding: 0 6px; font-size: 0.72rem; font-weight: 900; min-width: 18px; text-align: center; }
+  /* ─── Catálogo / Header sticky ─── */
+  .catalog-header { background: var(--f-navy); color: #fff; padding: 12px 18px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .ch-logo { height: 36px; width: auto; background: #fff; border-radius: 7px; padding: 3px 7px; }
+  .ch-info { flex: 1; margin-left: 14px; min-width: 0; }
+  .ch-title { font-size: .92rem; font-weight: 900; margin: 0; line-height: 1.15; letter-spacing: 1.2px; font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .ch-client { font-size: .64rem; opacity: 0.75; margin: 2px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  .ch-cart-btn { background: var(--f-orange); color: #fff; border: none; border-radius: 22px; padding: 9px 16px; font-weight: 800; font-size: .78rem; display: flex; align-items: center; gap: 6px; letter-spacing: .5px; box-shadow: 0 4px 12px rgba(244,123,62,.35); transition: transform .15s; }
+  .ch-cart-btn:active { transform: scale(0.96); }
+  .ch-cart-badge { background: #fff; color: var(--f-orange); border-radius: 999px; padding: 0 7px; font-size: .72rem; font-weight: 900; min-width: 20px; text-align: center; }
 
   /* ─── Buscador ─── */
-  .search-bar { padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--f-border); position: sticky; top: 60px; z-index: 9; }
-  .search-input { width: 100%; padding: 10px 14px 10px 38px; border: 1px solid var(--f-border); border-radius: 20px; font-size: 0.85rem; background: var(--f-bg-alt) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>") no-repeat 14px center; }
+  .search-bar { padding: 14px 16px 10px; background: #fff; border-bottom: 1px solid var(--f-border); max-width: 1600px; margin: 0 auto; }
+  .search-input { width: 100%; padding: 12px 16px 12px 42px; border: 1.5px solid var(--f-border); border-radius: 999px; font-size: .85rem; background: var(--f-bg-alt) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>") no-repeat 16px center; font-weight: 600; transition: all .15s; }
+  .search-input:focus { outline: none; border-color: var(--f-navy); background-color: #fff; box-shadow: 0 0 0 3px rgba(27,31,107,.08); }
 
-  /* ─── Product grid (idéntico al catálogo oficial) ─── */
-  .products-grid { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px 16px; }
-  @media (min-width: 700px) { .products-grid { grid-template-columns: 1fr 1fr; } }
+  /* ─── Product grid — espaciado premium ─── */
+  .products-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; }
+  @media (min-width: 700px) { .products-grid { grid-template-columns: 1fr 1fr; gap: 18px; padding: 20px; } }
   @media (min-width: 1100px) { .products-grid { grid-template-columns: 1fr 1fr 1fr; } }
   @media (min-width: 1500px) { .products-grid { grid-template-columns: 1fr 1fr 1fr 1fr; } }
 
-  /* Tarjeta profesional estilo catálogo admin */
-  .product-card { border:1.5px solid #e0e4f0; border-radius:12px; overflow:hidden; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.06); transition: transform 0.15s, box-shadow 0.2s; }
-  .product-card:hover { box-shadow:0 6px 18px rgba(0,0,0,.10); }
-  .product-card.agotado { opacity: 0.7; }
+  /* Tarjeta profesional — enmarcada, nítida, premium */
+  .product-card {
+    border: 1px solid #d9dde8;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px -12px rgba(15,23,42,.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .product-card:hover { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(15,23,42,.08), 0 16px 32px -8px rgba(15,23,42,.18); }
+  .product-card.agotado { opacity: 0.75; }
 
-  /* Header con color de marca */
-  .pc-brand-header { padding:0; position:relative; border-radius:12px 12px 0 0; overflow:hidden; }
-  .pc-brand-top { display:flex; align-items:center; gap:12px; padding:11px 13px; }
-  .pc-image { width:100px; height:100px; border-radius:10px; overflow:hidden; border:2px solid rgba(255,255,255,.4); flex-shrink:0; background:#fff; cursor:zoom-in; display:flex; align-items:center; justify-content:center; }
-  .pc-image img { width:100%; height:100%; object-fit:cover; }
-  .pc-image-placeholder { width:100px; height:100px; border-radius:10px; background:rgba(255,255,255,.12); border:2px dashed rgba(255,255,255,.3); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:2rem; color:rgba(255,255,255,.4); }
-  .pc-ref-block { flex:1; min-width:0; }
-  .pc-ref { font-family:'Barlow Condensed','Impact','Arial Narrow',sans-serif; font-weight:900; font-size:1.35rem; color:#fff; letter-spacing:2px; line-height:1; text-transform:uppercase; }
-  .pc-brand-label { font-size:.58rem; color:rgba(255,255,255,.55); font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:3px; }
-  /* Badge disponibilidad dentro del header */
-  .pc-stock-badge { flex-shrink:0; text-align:center; border-radius:9px; padding:7px 11px; min-width:72px; border:1.5px solid; }
-  .pc-stock-badge .pc-stock-label { font-size:.6rem; font-weight:900; text-transform:uppercase; letter-spacing:.5px; line-height:1.3; }
-  .pc-stock-badge .pc-stock-qty { font-family:'Barlow Condensed','Impact','Arial Narrow',sans-serif; font-weight:900; font-size:1.55rem; line-height:1; }
-  .pc-stock-badge .pc-stock-unit { font-size:.45rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
-  .pc-stock-good { background:rgba(74,222,128,.22); color:#4ade80; border-color:#4ade80; }
-  .pc-stock-low { background:rgba(251,191,36,.22); color:#fbbf24; border-color:#fbbf24; }
-  .pc-stock-out { background:rgba(248,113,113,.22); color:#f87171; border-color:#f87171; }
-  /* Badge Ordenada (amarillo, para "cantidades en camino") */
-  .pc-ord-badge { background:rgba(245,158,11,.22); color:#fbbf24; border:1.5px solid #fbbf24; border-radius:9px; padding:6px 10px; min-width:72px; text-align:center; margin-top:5px; }
-  .pc-ord-badge-lbl { font-size:.48rem; font-weight:900; text-transform:uppercase; letter-spacing:.6px; margin-bottom:1px; }
-  .pc-ord-badge-qty { font-family:'Barlow Condensed','Impact',sans-serif; font-weight:900; font-size:1.25rem; line-height:1; }
-  .pc-ord-badge-unit { font-size:.45rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
-  .pc-stock-col { display:flex; flex-direction:column; gap:0; align-items:stretch; }
+  /* ── HEADER con color de marca ── */
+  .pc-brand-header { padding: 0; position: relative; background: #1a2050; }
+  .pc-brand-top { display: flex; align-items: center; gap: 14px; padding: 14px; }
 
-  /* Bloque DATOS sobre fondo blanco */
-  .pc-data-block { background:#fff; border-top:2px solid rgba(0,0,0,.08); }
-  .pc-desc-box { padding:7px 13px; border-bottom:1px solid #e8edf5; background:#f8f9ff; }
-  .pc-data-lbl { font-size:.48rem; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:2px; }
-  .pc-data-val { font-size:.78rem; font-weight:700; color:#1a2050; line-height:1.3; }
-  .pc-code-grid { display:grid; grid-template-columns:1fr 1fr; }
-  .pc-code-cell { padding:5px 13px; }
-  .pc-code-cell.with-border { border-right:1px solid #e8edf5; }
-  .pc-code-val { font-size:.72rem; font-weight:700; color:#1a2050; letter-spacing:.3px; font-family:'Courier New',monospace; }
+  /* Imagen — contenedor blanco con más respiración */
+  .pc-image {
+    width: 108px;
+    height: 108px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,.92);
+    flex-shrink: 0;
+    background: #fff;
+    cursor: zoom-in;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  }
+  .pc-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+  .pc-image:hover img { transform: scale(1.05); }
+  .pc-image-placeholder {
+    width: 108px;
+    height: 108px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.08);
+    border: 2px dashed rgba(255,255,255,.24);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    color: rgba(255,255,255,.4);
+  }
 
-  /* Cuerpo: empaque, medida, precio, carrito */
-  .pc-body { padding:10px 13px 12px; }
-  .pc-chips { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:8px; }
-  .pc-chip { background:#f8f9ff; border-radius:6px; padding:5px 9px; }
-  .pc-chip-lbl { color:#94a3b8; font-size:.52rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; margin-bottom:1px; }
-  .pc-chip-val { font-weight:700; color:#1a2050; font-size:.76rem; }
+  /* Bloque REF + marca + badges apilados */
+  .pc-ref-block {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+  }
+  .pc-ref {
+    font-family: 'Barlow Condensed', 'Impact', 'Arial Narrow', sans-serif;
+    font-weight: 900;
+    font-size: 1.7rem;
+    color: #fff;
+    letter-spacing: 2.5px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .pc-brand-label {
+    font-size: .58rem;
+    color: rgba(255,255,255,.55);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+  }
 
-  .pc-price-box { background:linear-gradient(135deg,#10b981 0%,#059669 100%); border-radius:8px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .pc-price-lbl { font-size:.55rem; font-weight:800; color:rgba(255,255,255,.85); text-transform:uppercase; letter-spacing:1.2px; }
-  .pc-price-val { font-size:1.1rem; font-weight:900; color:#fff; font-family:'Barlow Condensed','Impact',sans-serif; letter-spacing:1px; }
+  /* Badge disponibilidad — pill compacto */
+  .pc-stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1.5px solid;
+    font-size: .58rem;
+    font-weight: 900;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    width: fit-content;
+    margin-top: 2px;
+  }
+  .pc-stock-badge .pc-stock-qty { font-family: 'Barlow Condensed', 'Impact', sans-serif; font-weight: 900; font-size: 1rem; line-height: 1; }
+  .pc-stock-badge .pc-stock-label { line-height: 1; }
+  .pc-stock-good { background: rgba(74,222,128,.22); color: #86efac; border-color: rgba(74,222,128,.6); }
+  .pc-stock-low  { background: rgba(251,191,36,.22); color: #fbbf24; border-color: rgba(251,191,36,.6); }
+  .pc-stock-out  { background: rgba(248,113,113,.22); color: #fca5a5; border-color: rgba(248,113,113,.5); }
+  .pc-ord-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(245,158,11,.22);
+    color: #fbbf24;
+    border: 1.5px solid rgba(245,158,11,.6);
+    font-size: .58rem;
+    font-weight: 900;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+  .pc-ord-badge .pc-ord-qty { font-family: 'Barlow Condensed', 'Impact', sans-serif; font-weight: 900; font-size: 1rem; line-height: 1; }
 
-  /* 3 cajas de precios USD | BCV | TF (idéntico al admin) */
-  .pc-prices-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-bottom:10px; }
-  .pc-price-cell { border-radius:7px; padding:6px 4px; text-align:center; }
-  .pc-price-cell.usd { background:linear-gradient(135deg,#10b981 0%,#059669 100%); }
-  .pc-price-cell.bcv { background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%); }
-  .pc-price-cell.tf  { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); }
-  .pc-price-cell-lbl { font-size:.5rem; font-weight:900; color:rgba(255,255,255,.92); letter-spacing:1px; margin-bottom:2px; }
-  .pc-price-cell-val { font-size:.92rem; font-weight:900; color:#fff; font-family:'Barlow Condensed','Impact',sans-serif; letter-spacing:.5px; line-height:1; }
+  /* Badges apilados verticalmente al lado del REF */
+  .pc-badges-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; margin-top: 1px; }
+
+  /* ── DATOS fondo blanco — más definido ── */
+  .pc-data-block {
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,.06);
+  }
+  .pc-desc-box {
+    padding: 10px 14px;
+    border-bottom: 1px solid #eef1f8;
+    background: #fafbff;
+  }
+  .pc-data-lbl {
+    font-size: .5rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    margin-bottom: 3px;
+  }
+  .pc-data-val {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #1a2050;
+    line-height: 1.35;
+  }
+  .pc-code-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #eef1f8;
+  }
+  .pc-code-cell { padding: 8px 14px; }
+  .pc-code-cell.with-border { border-right: 1px solid #eef1f8; }
+  .pc-code-val {
+    font-size: .74rem;
+    font-weight: 700;
+    color: #1a2050;
+    letter-spacing: .3px;
+    font-family: 'Courier New', monospace;
+  }
+
+  /* ── CUERPO: empaque, medida, precio, controles ── */
+  .pc-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .pc-chips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .pc-chip {
+    background: #f8f9ff;
+    border: 1px solid #eef1f8;
+    border-radius: 8px;
+    padding: 7px 11px;
+  }
+  .pc-chip-lbl {
+    color: #94a3b8;
+    font-size: .5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 2px;
+  }
+  .pc-chip-val {
+    font-weight: 700;
+    color: #1a2050;
+    font-size: .78rem;
+  }
+
+  /* Caja única de precio — según moneda configurada en el token */
+  .pc-prices-wrap { margin-top: 2px; }
+  .pc-prices-header {
+    font-size: .5rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    margin-bottom: 5px;
+    padding-left: 2px;
+  }
+  .pc-price-single {
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  }
+  .pc-price-single.usd { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .pc-price-single.bcv { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+  .pc-price-single.tf  { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .pc-price-single-lbl {
+    font-size: .62rem;
+    font-weight: 900;
+    color: rgba(255,255,255,.9);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .pc-price-single-val {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+    font-family: 'Barlow Condensed', 'Impact', sans-serif;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
 
   /* Controles carrito */
-  .pc-controls { display:flex; gap:8px; align-items:center; justify-content:space-between; }
-  .pc-qty-group { display:flex; align-items:center; border:1.5px solid #e0e4f0; border-radius:22px; overflow:hidden; background:#f8f9ff; }
-  .pc-qty-btn { width:34px; height:34px; background:transparent; color:var(--f-navy); border:none; font-weight:900; font-size:1.05rem; display:flex; align-items:center; justify-content:center; }
-  .pc-qty-btn:active { background:#e0e4f0; }
-  .pc-qty-btn:disabled { opacity:.4; cursor:not-allowed; }
-  .pc-qty-input { width:54px; height:34px; border:none; text-align:center; font-weight:800; font-size:.88rem; background:transparent; color:var(--f-text); -moz-appearance: textfield; }
-  .pc-qty-input::-webkit-outer-spin-button, .pc-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .pc-add-btn { flex:1; background:var(--f-navy); color:#fff; border:none; border-radius:22px; padding:9px 12px; font-weight:800; font-size:.78rem; letter-spacing:.5px; transition:background 0.15s; }
-  .pc-add-btn:active { opacity:.85; }
-  .pc-add-btn:disabled { opacity:.35; cursor:not-allowed; }
-  .pc-add-btn.added { background:var(--f-success); }
+  .pc-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+  }
+  .pc-qty-group {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #d9dde8;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #f8f9ff;
+  }
+  .pc-qty-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    color: var(--f-navy);
+    border: none;
+    font-weight: 900;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pc-qty-btn:active { background: #e0e4f0; }
+  .pc-qty-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .pc-qty-input {
+    width: 54px;
+    height: 36px;
+    border: none;
+    text-align: center;
+    font-weight: 800;
+    font-size: .9rem;
+    background: transparent;
+    color: var(--f-text);
+    -moz-appearance: textfield;
+  }
+  .pc-qty-input::-webkit-outer-spin-button,
+  .pc-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pc-add-btn {
+    flex: 1;
+    background: var(--f-navy);
+    color: #fff;
+    border: none;
+    border-radius: 22px;
+    padding: 10px 14px;
+    font-weight: 800;
+    font-size: .76rem;
+    letter-spacing: .8px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .pc-add-btn:active { transform: scale(0.97); }
+  .pc-add-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .pc-add-btn.added { background: var(--f-success); }
 
   /* Contador de resultados */
-  .results-counter { padding:8px 16px; background:#fff; border-bottom:1px solid var(--f-border); font-size:.75rem; color:var(--f-text-muted); font-weight:600; }
-  .results-counter strong { color:var(--f-navy); font-weight:800; }
+  .results-counter { padding: 10px 16px; background:#fff; border-bottom:1px solid var(--f-border); font-size:.72rem; color:var(--f-text-muted); font-weight:700; letter-spacing:1px; text-transform:uppercase; max-width: 1600px; margin: 0 auto; }
+  .results-counter strong { color:var(--f-navy); font-weight:900; font-family:'Barlow Condensed',sans-serif; font-size:.95rem; letter-spacing:1.5px; }
 
   /* Filtros de stock — estilo unificado con el admin */
-  .stock-filters { padding:10px 16px; background:#fff; border-bottom:1px solid var(--f-border); display:flex; gap:7px; overflow-x:auto; -webkit-overflow-scrolling:touch; align-items:center; }
-  .stock-filters::before { content:'STOCK:'; font-size:.65rem; font-weight:900; color:#64748b; letter-spacing:1.5px; white-space:nowrap; margin-right:4px; }
-  .stock-pill { background:#f8fafc; border:1.5px solid var(--f-border); color:var(--f-text); padding:7px 14px; border-radius:999px; font-size:.72rem; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; letter-spacing:.5px; transition:all .15s; text-transform:uppercase; }
+  .stock-filters { padding:10px 16px; background:#fff; border-bottom:1px solid var(--f-border); display:flex; gap:7px; overflow-x:auto; -webkit-overflow-scrolling:touch; align-items:center; max-width: 1600px; margin: 0 auto; }
+  .stock-filters::before { content:'STOCK:'; font-size:.62rem; font-weight:900; color:#64748b; letter-spacing:1.8px; white-space:nowrap; margin-right:4px; }
+  .stock-pill { background:#f8fafc; border:1.5px solid var(--f-border); color:var(--f-text); padding:7px 14px; border-radius:999px; font-size:.7rem; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; letter-spacing:.8px; transition:all .15s; text-transform:uppercase; }
   .stock-pill:active { transform:scale(0.96); }
   .stock-pill.active { background:var(--f-navy); color:#fff; border-color:var(--f-navy); box-shadow:0 2px 8px rgba(27,31,107,.3); }
   .stock-pill.in.active { background:#16a34a; border-color:#16a34a; box-shadow:0 2px 8px rgba(22,163,74,.35); }
   .stock-pill.low.active { background:#d97706; border-color:#d97706; box-shadow:0 2px 8px rgba(217,119,6,.35); }
   .stock-pill.out.active { background:#dc2626; border-color:#dc2626; box-shadow:0 2px 8px rgba(220,38,38,.35); }
   .stock-pill.ord.active { background:#f59e0b; color:#1f2937; border-color:#f59e0b; box-shadow:0 2px 8px rgba(245,158,11,.35); }
+
+  /* Filtros de marca (filter-pills) */
+  .filter-pills { padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--f-border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 1600px; margin: 0 auto; }
+  .filter-pill { background: var(--f-bg-alt); border: 1.5px solid var(--f-border); color: var(--f-text); padding: 7px 16px; border-radius: 999px; font-size: .72rem; font-weight: 800; white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; transition: all .15s; }
+  .filter-pill:active { transform: scale(0.96); }
+  .filter-pill.active { background: var(--f-navy); color: #fff; border-color: var(--f-navy); box-shadow: 0 2px 8px rgba(27,31,107,.3); }
 
   /* Lightbox de imagen */
   .img-lightbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
@@ -190,16 +406,28 @@
   .img-progress { position:fixed; top:14px; right:14px; background:var(--f-navy); color:#fff; padding:8px 14px; border-radius:999px; font-size:.72rem; font-weight:700; z-index:15; box-shadow:0 4px 16px rgba(0,0,0,.2); display:none; }
   .img-progress.active { display:block; }
 
-  /* Banner de bienvenida dentro del catálogo */
-  .welcome-banner { background:linear-gradient(135deg, var(--f-navy) 0%, var(--f-violet) 60%, var(--f-orange) 120%); color:#fff; padding:22px 20px; margin:0; position:relative; overflow:hidden; }
-  .welcome-banner::before { content:''; position:absolute; top:-50%; right:-20%; width:300px; height:300px; background:radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%); border-radius:50%; }
-  .wb-content { position:relative; z-index:2; display:flex; align-items:center; gap:18px; max-width:1400px; margin:0 auto; }
-  .wb-icon { font-size:2.2rem; flex-shrink:0; }
-  .wb-text { flex:1; }
-  .wb-title { font-size:1.15rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; line-height:1.2; font-family:'Barlow Condensed',sans-serif; margin:0 0 4px 0; }
-  .wb-subtitle { font-size:.8rem; opacity:.92; font-weight:600; line-height:1.4; margin:0; }
-  .wb-chips { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
-  .wb-chip { background:rgba(255,255,255,.22); padding:3px 10px; border-radius:999px; font-size:.65rem; font-weight:800; letter-spacing:.6px; text-transform:uppercase; backdrop-filter:blur(6px); }
+  /* Banner corporativo del catálogo — minimalista mayorista */
+  .welcome-banner { background:linear-gradient(135deg, #1B1F6B 0%, #2d2b7a 100%); color:#fff; padding:22px 24px; position:relative; overflow:hidden; border-bottom:3px solid var(--f-orange); }
+  .welcome-banner::before { content:''; position:absolute; top:0; right:0; width:240px; height:100%; background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 100' opacity='.08'><circle cx='210' cy='20' r='40' fill='%23F47B3E'/><circle cx='180' cy='70' r='25' fill='%239B6FD4'/></svg>") no-repeat right center; opacity:.5; }
+  .wb-content { position:relative; z-index:2; display:flex; align-items:center; gap:22px; max-width:1400px; margin:0 auto; }
+  .wb-badge { width:54px; height:54px; background:rgba(255,255,255,.14); border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid rgba(255,255,255,.22); backdrop-filter:blur(8px); }
+  .wb-badge svg { width:30px; height:30px; }
+  .wb-text { flex:1; min-width:0; }
+  .wb-eyebrow { font-size:.6rem; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:var(--f-orange); margin:0 0 3px 0; }
+  .wb-title { font-size:1.4rem; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; line-height:1.15; font-family:'Barlow Condensed',sans-serif; margin:0 0 3px 0; }
+  .wb-subtitle { font-size:.76rem; opacity:.78; font-weight:500; line-height:1.4; margin:0; max-width:560px; letter-spacing:.3px; }
+  .wb-meta { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; padding-left:20px; border-left:1px solid rgba(255,255,255,.15); }
+  .wb-meta-lbl { font-size:.55rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; opacity:.7; }
+  .wb-meta-val { font-size:.85rem; font-weight:800; font-family:'Barlow Condensed',sans-serif; letter-spacing:.8px; }
+
+  @media (max-width: 640px) {
+    .welcome-banner { padding: 16px 16px; }
+    .wb-content { gap:14px; }
+    .wb-badge { width:44px; height:44px; }
+    .wb-title { font-size:1.15rem; }
+    .wb-subtitle { font-size:.7rem; }
+    .wb-meta { display:none; }
+  }
 
   /* ─── Cart modal ─── */
   .modal-ov { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
@@ -246,11 +474,6 @@
   .bb-summary { font-size: 0.8rem; }
   .bb-total { font-size: 1.05rem; font-weight: 900; }
   .bb-btn { background: var(--f-orange); color: #fff; border: none; border-radius: 20px; padding: 10px 18px; font-weight: 800; font-size: 0.85rem; }
-
-  /* ─── Filtros ─── */
-  .filter-pills { padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--f-border); display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .filter-pill { background: var(--f-bg-alt); border: 1px solid var(--f-border); color: var(--f-text); padding: 6px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
-  .filter-pill.active { background: var(--f-navy); color: #fff; border-color: var(--f-navy); }
 </style>
 </head>
 <body>
@@ -283,10 +506,7 @@
       <img id="form-logo" class="form-logo" alt="Farmers C.A.">
       <h2 class="form-welcome" id="form-welcome-title">BIENVENIDO</h2>
       <p class="form-client-name" id="form-client-name"></p>
-      <div class="form-intro-msg">
-        <strong style="color:var(--f-navy);font-size:.92rem;">¡Gracias por confiar en Farmers C.A.!</strong><br>
-        Por favor confirma tus datos para acceder a nuestro catálogo completo con precios actualizados, disponibilidad en tiempo real e imágenes de alta calidad.
-      </div>
+      <div class="form-divider"></div>
     </div>
 
     <label class="form-label" for="cli-nombre">Nombre completo *</label>
@@ -318,19 +538,24 @@
     </button>
   </div>
 
-  <!-- ── Banner de bienvenida profesional ── -->
+  <!-- ── Banner corporativo mayorista ── -->
   <div class="welcome-banner">
     <div class="wb-content">
-      <div class="wb-icon">🛍️</div>
+      <div class="wb-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
       <div class="wb-text">
-        <h2 class="wb-title" id="wb-title">BIENVENIDO AL CATÁLOGO FARMERS</h2>
-        <p class="wb-subtitle">Explora nuestro catálogo completo de distribución mayorista · Precios actualizados · Disponibilidad en tiempo real</p>
-        <div class="wb-chips">
-          <span class="wb-chip">✓ Precios USD/BCV/TF</span>
-          <span class="wb-chip">✓ Imágenes HD</span>
-          <span class="wb-chip">✓ Stock en vivo</span>
-          <span class="wb-chip">🇻🇪 Venezuela</span>
-        </div>
+        <p class="wb-eyebrow">Distribución Mayorista</p>
+        <h2 class="wb-title" id="wb-title">CATÁLOGO FARMERS C.A.</h2>
+        <p class="wb-subtitle" id="wb-subtitle">Acceso exclusivo para clientes autorizados</p>
+      </div>
+      <div class="wb-meta">
+        <div class="wb-meta-lbl">Cliente</div>
+        <div class="wb-meta-val" id="wb-client-code">—</div>
       </div>
     </div>
   </div>
@@ -738,11 +963,18 @@ function simboloMoneda() {
 function mostrarCatalogo() {
   document.getElementById('header-client-name').textContent = Portal.clienteForm.razon;
 
-  // Personalizar banner con nombre del cliente
-  const wbTitle = document.getElementById('wb-title');
-  if (wbTitle) {
+  // Personalizar banner: código del cliente (primera letra del nombre + razón social)
+  const wbClient = document.getElementById('wb-client-code');
+  if (wbClient) {
+    wbClient.textContent = (Portal.clienteForm.razon || '').toUpperCase();
+  }
+  // Subtitle: saludo personalizado con primer nombre
+  const wbSubtitle = document.getElementById('wb-subtitle');
+  if (wbSubtitle) {
     const firstName = (Portal.clienteForm.nombre || '').split(' ')[0].toUpperCase();
-    wbTitle.textContent = firstName ? ('BIENVENIDO, ' + firstName) : 'BIENVENIDO AL CATÁLOGO FARMERS';
+    wbSubtitle.textContent = firstName
+      ? 'Bienvenido ' + firstName + ' · Acceso exclusivo para clientes autorizados'
+      : 'Acceso exclusivo para clientes autorizados';
   }
 
   // Pills de filtros de marca
@@ -877,11 +1109,11 @@ function crearCardProducto(p) {
     if (mostrarStockMode === 'exacto' && disp > 0) {
       badgeHTML =
         '<div class="pc-stock-badge ' + cls + '">' +
-          '<div class="pc-stock-qty">' + disp + '</div>' +
-          '<div class="pc-stock-unit">UDS DISP.</div>' +
+          '<span class="pc-stock-qty">' + disp + '</span>' +
+          '<span class="pc-stock-label">UDS DISP.</span>' +
         '</div>';
     } else {
-      badgeHTML = '<div class="pc-stock-badge ' + cls + '"><div class="pc-stock-label">' + label + '</div></div>';
+      badgeHTML = '<div class="pc-stock-badge ' + cls + '"><span class="pc-stock-label">' + label + '</span></div>';
     }
   }
 
@@ -891,15 +1123,15 @@ function crearCardProducto(p) {
   if (ordQty > 0) {
     ordBadgeHTML =
       '<div class="pc-ord-badge">' +
-        '<div class="pc-ord-badge-lbl">📦 ORDENADA</div>' +
-        '<div class="pc-ord-badge-qty">' + ordQty + '</div>' +
-        '<div class="pc-ord-badge-unit">UDS</div>' +
+        '<span>📦</span>' +
+        '<span class="pc-ord-qty">' + ordQty + '</span>' +
+        '<span>ORDENADA</span>' +
       '</div>';
   }
 
-  // Apilar stock + ordenada si hay ambos
-  const badgeStackHTML = (badgeHTML || ordBadgeHTML)
-    ? '<div class="pc-stock-col">' + badgeHTML + ordBadgeHTML + '</div>'
+  // Stack de badges vertical junto al REF (no columna separada)
+  const badgesStackInline = (badgeHTML || ordBadgeHTML)
+    ? '<div class="pc-badges-stack">' + badgeHTML + ordBadgeHTML + '</div>'
     : '';
 
   // Imagen o placeholder
@@ -922,8 +1154,8 @@ function crearCardProducto(p) {
         '<div class="pc-ref-block">' +
           '<div class="pc-ref">' + esc(p.r) + '</div>' +
           '<div class="pc-brand-label">' + esc(p.br || '') + '</div>' +
+          badgesStackInline +
         '</div>' +
-        badgeStackHTML +
       '</div>' +
 
       // ══ DATOS fondo blanco ══
@@ -958,18 +1190,11 @@ function crearCardProducto(p) {
         '</div>' +
       '</div>' +
 
-      '<div class="pc-prices-3">' +
-        '<div class="pc-price-cell usd">' +
-          '<div class="pc-price-cell-lbl">USD</div>' +
-          '<div class="pc-price-cell-val">$ ' + getPrecioUSD(p).toFixed(2) + '</div>' +
-        '</div>' +
-        '<div class="pc-price-cell bcv">' +
-          '<div class="pc-price-cell-lbl">BCV</div>' +
-          '<div class="pc-price-cell-val">Bs ' + getPrecioBCV(p).toFixed(2) + '</div>' +
-        '</div>' +
-        '<div class="pc-price-cell tf">' +
-          '<div class="pc-price-cell-lbl">TF</div>' +
-          '<div class="pc-price-cell-val">Bs ' + getPrecioTF(p).toFixed(2) + '</div>' +
+      '<div class="pc-prices-wrap">' +
+        '<div class="pc-prices-header">PRECIO (REF USD)</div>' +
+        '<div class="pc-price-single ' + moneda.toLowerCase() + '">' +
+          '<div class="pc-price-single-lbl">' + moneda + '</div>' +
+          '<div class="pc-price-single-val">$ ' + precio.toFixed(2) + '</div>' +
         '</div>' +
       '</div>' +
 
@@ -1304,7 +1529,7 @@ function descargarExcel() {
     ['Teléfono', p.cliente.telefono || ''],
     [],
     ['DETALLE DE PRODUCTOS'],
-    ['REFERENCIA', 'CÓDIGO BARRA', 'CÓDIGO INTERNO', 'DESCRIPCIÓN', 'MARCA', 'EMPAQUE', 'MEDIDA', 'CANTIDAD', 'PRECIO USD', 'PRECIO BCV', 'PRECIO TF', 'PRECIO ' + (p.moneda || 'USD'), 'SUBTOTAL ' + (p.moneda || 'USD')],
+    ['REFERENCIA', 'CÓDIGO BARRA', 'CÓDIGO INTERNO', 'DESCRIPCIÓN', 'MARCA', 'EMPAQUE', 'MEDIDA', 'CANTIDAD', 'PRECIO ' + (p.moneda || 'USD') + ' (REF $)', 'SUBTOTAL ' + (p.moneda || 'USD') + ' (REF $)'],
     ...p.items.map(it => {
       const sub = (parseFloat(it.qty)||0) * (parseFloat(it.precioMostrado)||0);
       return [
@@ -1316,20 +1541,17 @@ function descargarExcel() {
         it.empaque || '',
         it.medida || '',
         parseFloat(it.qty) || 0,
-        parseFloat(it.precioUSD || 0),
-        parseFloat(it.precioBCV || 0),
-        parseFloat(it.precioTF  || 0),
         parseFloat(it.precioMostrado) || 0,
         sub
       ];
     }),
     [],
-    ['', '', '', '', '', '', '', '', '', '', '', 'TOTAL:', p.total || 0]
+    ['', '', '', '', '', '', '', '', 'TOTAL:', p.total || 0]
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  // Anchos: REF, CB, CódInt, DESC, MARCA, EMP, MED, CANT, USD, BCV, TF, PRECIO, SUB
-  ws['!cols'] = [ {wch:12}, {wch:16}, {wch:14}, {wch:42}, {wch:12}, {wch:12}, {wch:8}, {wch:10}, {wch:12}, {wch:12}, {wch:12}, {wch:13}, {wch:14} ];
+  // Anchos: REF, CB, CódInt, DESC, MARCA, EMP, MED, CANT, PRECIO, SUB
+  ws['!cols'] = [ {wch:12}, {wch:16}, {wch:14}, {wch:42}, {wch:12}, {wch:12}, {wch:8}, {wch:10}, {wch:16}, {wch:16} ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Pedido');

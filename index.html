@@ -1271,12 +1271,23 @@ function crearCardProducto(p) {
   const ordQty = mostrarOrdenadaActiva() ? getOrdenada(p.r) : 0;
   let ordBadgeHTML = '';
   if (ordQty > 0) {
-    ordBadgeHTML =
-      '<div class="pc-ord-badge">' +
-        '<span>📦</span>' +
-        '<span class="pc-ord-qty">' + ordQty + '</span>' +
-        '<span>ORDENADA</span>' +
-      '</div>';
+    const ordModo = (Portal.tokenData.configVista && Portal.tokenData.configVista.ordenadaModo) || 'exacto';
+    if (ordModo === 'simple') {
+      // Solo mostrar la palabra "ORDENADA" sin cantidad
+      ordBadgeHTML =
+        '<div class="pc-ord-badge">' +
+          '<span>📦</span>' +
+          '<span>ORDENADA</span>' +
+        '</div>';
+    } else {
+      // Modo 'exacto' (default): mostrar cantidad + ORDENADA
+      ordBadgeHTML =
+        '<div class="pc-ord-badge">' +
+          '<span>📦</span>' +
+          '<span class="pc-ord-qty">' + ordQty + '</span>' +
+          '<span>ORDENADA</span>' +
+        '</div>';
+    }
   }
 
   // Stack de badges vertical junto al REF (no columna separada)

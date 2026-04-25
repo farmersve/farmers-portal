@@ -1002,11 +1002,31 @@ async function cargarCatalogo() {
   if (!snapshotOK) {
     setLoadProgress(20, 'Calculando inventario desde fuentes individuales...');
 
-    // Cargar inventario, sales y pt_data desde Firestore
+    // ════════════════════════════════════════════════════════════════════
+    // RÉPLICA EXACTA DE LA LÓGICA DEL ADMIN
+    // ════════════════════════════════════════════════════════════════════
+    // El admin usa estas fuentes oficiales en localStorage:
+    //   • farmers_inv               → inventario REAL (qty por ref)
+    //   • farmers_inv_comprometido  → comprometido OFICIAL { ref: {qty, pedidos[]} }
+    //   • farmers_pt_data           → pt_data { ref: {exOrdenada, ...} }
+    //
+    // El admin calcula:
+    //   real        = inv[ref] o p.ex
+    //   comprometido = comp[ref] ? comp[ref].qty : 0
+    //   disponible  = max(0, real - comprometido)
+    //   ordenada    = pt_data[ref].exOrdenada
+    //
+    // El portal lee las mismas keys desde Firestore:
+    //   data/inventory      ← farmers_inv
+    //   data/comprometido   ← farmers_inv_comprometido
+    //   data/pt_data        ← farmers_pt_data
+    // ════════════════════════════════════════════════════════════════════
+
     let invMap = {};
-    let salesArr = [];
+    let compStorage = {};  // { ref: {qty, pedidos} } — formato oficial admin
     let ptDataMap = {};
 
+    // 1) Inventario REAL
     try {
       const invDoc = await getDoc(doc(db, 'data', 'inventory'));
       if (invDoc.exists() && invDoc.data().v) {
@@ -1014,13 +1034,15 @@ async function cargarCatalogo() {
       }
     } catch(e) { console.warn('[PORTAL] Sin inventory'); }
 
+    // 2) Comprometido OFICIAL (farmers_inv_comprometido)
     try {
-      const salesDoc = await getDoc(doc(db, 'data', 'sales'));
-      if (salesDoc.exists() && salesDoc.data().v) {
-        salesArr = JSON.parse(salesDoc.data().v);
+      const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
+      if (compDoc.exists() && compDoc.data().v) {
+        compStorage = JSON.parse(compDoc.data().v);
       }
-    } catch(e) { console.warn('[PORTAL] Sin sales'); }
+    } catch(e) { console.warn('[PORTAL] Sin comprometido'); }
 
+    // 3) pt_data (Ordenada)
     try {
       const ptDoc = await getDoc(doc(db, 'data', 'pt_data'));
       if (ptDoc.exists() && ptDoc.data().v) {
@@ -1028,23 +1050,41 @@ async function cargarCatalogo() {
       }
     } catch(e) { console.warn('[PORTAL] Sin pt_data'); }
 
-    // Calcular comprometido desde sales (idéntico a ptGetComprometidas del admin)
-    const compMap = {};
-    (salesArr || []).forEach(function(s) {
-      if (s.tipo !== 'pedido') return;
-      (s.items || []).forEach(function(it) {
-        if (!it.r) return;
-        compMap[it.r] = (compMap[it.r] || 0) + (parseInt(it.orden) || 0);
-      });
-    });
+    // ── Lógica IDÉNTICA al admin ──
+    // window.getDisponible del admin (línea 3632):
+    //   var comp_qty = comp[ref] ? (comp[ref].qty||0) : 0;
+    //   return Math.max(0, real - comp_qty);
+    function _adminGetCompQty(ref) {
+      var entry = compStorage[ref];
+      if (!entry) return 0;
+      // Estructura oficial: { qty: N, pedidos: [...] }
+      if (typeof entry === 'object') return parseInt(entry.qty || 0) || 0;
+      // Compatibilidad: si vino como número directo
+      return parseInt(entry) || 0;
+    }
 
-    // Construir snapshot por ref
+    // Diagnóstico
+    let refsConComp = 0;
+    let totalCompUds = 0;
+    Object.keys(compStorage).forEach(function(r){
+      var q = _adminGetCompQty(r);
+      if (q > 0) { refsConComp++; totalCompUds += q; }
+    });
+    console.log('[PORTAL · DIAG] data/comprometido cargado: ' + Object.keys(compStorage).length + ' entradas');
+    console.log('[PORTAL · DIAG] Refs con comprometido > 0: ' + refsConComp + ' (' + totalCompUds + ' uds totales)');
+    if (compStorage['EXC003']) {
+      console.log('[PORTAL · DIAG] EXC003 en comprometido:', compStorage['EXC003']);
+    } else {
+      console.log('[PORTAL · DIAG] EXC003 NO está en data/comprometido');
+    }
+
+    // Construir snapshot por ref (réplica exacta de la lógica admin)
     const snapBuilt = {};
     let conStock = 0, bajoStock = 0, agotado = 0, conOrd = 0;
     Portal.productos.forEach(function(p) {
       if (!p.r) return;
       const real = (invMap[p.r] !== undefined) ? (parseInt(invMap[p.r]) || 0) : (parseInt(p.ex) || 0);
-      const comp = compMap[p.r] || 0;
+      const comp = _adminGetCompQty(p.r);
       const disp = Math.max(0, real - comp);
       const ord = parseInt((ptDataMap[p.r] || {}).exOrdenada || 0) || 0;
       snapBuilt[p.r] = { real, comprometido: comp, disponible: disp, ordenada: ord };

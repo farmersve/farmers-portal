@@ -1206,6 +1206,62 @@ function disponibleProducto(ref) {
   return Math.max(0, real - comp);
 }
 
+// ═══ Comando de diagnóstico del portal ═══
+// Pega `farmersDiag('EXC003')` en la consola para ver el estado de una ref específica
+// O `farmersDiag()` para ver el resumen general
+window.farmersDiag = function(ref) {
+  console.log('═════════════════════════════════════════');
+  console.log('🔍 DIAGNÓSTICO PORTAL FARMERS');
+  console.log('═════════════════════════════════════════');
+  if (ref) {
+    const refUp = String(ref).toUpperCase();
+    const prod = Portal.productos.find(p => String(p.r).toUpperCase() === refUp);
+    const snap = Portal.snapshot[refUp] || Portal.snapshot[ref];
+    console.log('REF buscada: %s', refUp);
+    console.log('');
+    console.log('📦 Producto en catálogo:', prod || 'NO ENCONTRADO');
+    if (prod) {
+      console.log('   - p.ex (campo nativo):', prod.ex);
+      console.log('   - p.br (marca):', prod.br);
+    }
+    console.log('');
+    console.log('📊 Snapshot del portal:');
+    if (snap) {
+      console.log('   - real:', snap.real);
+      console.log('   - comprometido:', snap.comprometido);
+      console.log('   - disponible:', snap.disponible);
+      console.log('   - ordenada:', snap.ordenada);
+      console.log('');
+      console.log('🎯 Lo que el cliente ve:');
+      const disp = snap.disponible;
+      if (disp === 0) console.log('   → Badge: ✗ AGOTADO');
+      else if (disp <= 10) console.log('   → Badge: ⚠ BAJO STOCK (' + disp + ' uds)');
+      else console.log('   → Badge: ✓ EN STOCK (' + disp + ' uds)');
+      if (snap.ordenada > 0) console.log('   → Badge Ordenada: 📦 ' + snap.ordenada);
+    } else {
+      console.log('   ⚠ NO HAY ENTRADA EN SNAPSHOT — la ref no existe en el catálogo o el snapshot');
+    }
+  } else {
+    console.log('Productos en catálogo: %d', Portal.productos.length);
+    console.log('Refs en snapshot: %d', Object.keys(Portal.snapshot).length);
+    let conStock = 0, bajo = 0, agotado = 0, conOrd = 0;
+    Object.values(Portal.snapshot).forEach(s => {
+      if (s.disponible === 0) agotado++;
+      else if (s.disponible <= 10) bajo++;
+      else conStock++;
+      if (s.ordenada > 0) conOrd++;
+    });
+    console.log('  ✓ Con stock: %d', conStock);
+    console.log('  ⚠ Bajo stock: %d', bajo);
+    console.log('  ✗ Agotados: %d', agotado);
+    console.log('  📦 Con Ordenada: %d', conOrd);
+    console.log('');
+    console.log('💡 Para inspeccionar una ref:  farmersDiag("EXC003")');
+  }
+  console.log('═════════════════════════════════════════');
+  return 'OK';
+};
+
 // Cantidad real (sin descontar comprometido) — para mostrar al admin/diagnóstico
 function realProducto(ref) {
   if (Portal.snapshot && Portal.snapshot[ref]) {

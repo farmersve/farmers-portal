@@ -1338,9 +1338,9 @@ function getPrecioBCV(p) { return parseFloat(p.bv || p.u || 0); }
 function getPrecioTF(p)  { return parseFloat(p.t  || p.u || 0); }
 
 function simboloMoneda() {
-  const moneda = Portal.tokenData.configVista?.moneda || 'USD';
-  if (moneda === 'BCV') return 'Bs ';
-  if (moneda === 'TF') return 'Bs ';
+  // Los 3 niveles de precio (USD/BCV/TF) son TODOS referencias en dólares.
+  // p.u = USD directo, p.bv = USD con margen BCV, p.t = USD con margen TF.
+  // El símbolo SIEMPRE es $ porque la referencia es USD para los 3 casos.
   return '$';
 }
 
@@ -1590,7 +1590,7 @@ function crearCardProducto(p) {
         '<div class="pc-prices-header">PRECIO (REF USD)</div>' +
         '<div class="pc-price-single ' + moneda.toLowerCase() + '">' +
           '<div class="pc-price-single-lbl">' + moneda + '</div>' +
-          '<div class="pc-price-single-val">$ ' + precio.toFixed(2) + '</div>' +
+          '<div class="pc-price-single-val">' + simboloMoneda() + ' ' + precio.toFixed(2) + '</div>' +
         '</div>' +
       '</div>' +
 

@@ -195,9 +195,15 @@
   .product-card:hover { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(15,23,42,.08), 0 16px 32px -8px rgba(15,23,42,.18); }
   .product-card.agotado { opacity: 0.75; }
 
-  /* ── HEADER con color de marca ── */
+  /* ── HEADER con color de marca — altura uniforme ── */
   .pc-brand-header { padding: 0; position: relative; background: #1a2050; }
-  .pc-brand-top { display: flex; align-items: center; gap: 14px; padding: 14px; }
+  .pc-brand-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    min-height: 140px;
+  }
 
   /* Imagen — contenedor blanco con más respiración */
   .pc-image {
@@ -230,7 +236,7 @@
     color: rgba(255,255,255,.4);
   }
 
-  /* Bloque REF + marca + badges apilados */
+  /* Bloque REF + marca + badges apilados — alturas alineadas */
   .pc-ref-block {
     flex: 1;
     min-width: 0;
@@ -238,6 +244,7 @@
     flex-direction: column;
     justify-content: center;
     gap: 5px;
+    min-height: 108px;
   }
   .pc-ref {
     font-family: 'Barlow Condensed', 'Impact', 'Arial Narrow', sans-serif;
@@ -293,8 +300,15 @@
   }
   .pc-ord-badge .pc-ord-qty { font-family: 'Barlow Condensed', 'Impact', sans-serif; font-weight: 900; font-size: 1rem; line-height: 1; }
 
-  /* Badges apilados verticalmente al lado del REF */
-  .pc-badges-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; margin-top: 1px; }
+  /* Badges apilados verticalmente al lado del REF — espacio reservado fijo */
+  .pc-badges-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+    margin-top: 1px;
+    min-height: 26px;  /* Reserva espacio para 1 badge mínimo, alinea filas */
+  }
 
   /* ── DATOS fondo blanco — más definido ── */
   .pc-data-block {
@@ -305,6 +319,10 @@
     padding: 10px 14px;
     border-bottom: 1px solid #eef1f8;
     background: #fafbff;
+    min-height: 64px;  /* 2 líneas de descripción para alinear todas */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .pc-data-lbl {
     font-size: .5rem;
@@ -319,13 +337,24 @@
     font-weight: 700;
     color: #1a2050;
     line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .pc-code-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     border-bottom: 1px solid #eef1f8;
   }
-  .pc-code-cell { padding: 8px 14px; }
+  .pc-code-cell {
+    padding: 8px 14px;
+    min-height: 46px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .pc-code-cell.with-border { border-right: 1px solid #eef1f8; }
   .pc-code-val {
     font-size: .74rem;
@@ -333,10 +362,19 @@
     color: #1a2050;
     letter-spacing: .3px;
     font-family: 'Courier New', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ── CUERPO: empaque, medida, precio, controles ── */
-  .pc-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .pc-body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
   .pc-chips {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -347,6 +385,10 @@
     border: 1px solid #eef1f8;
     border-radius: 8px;
     padding: 7px 11px;
+    min-height: 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   .pc-chip-lbl {
     color: #94a3b8;
@@ -363,7 +405,8 @@
   }
 
   /* Caja única de precio — según moneda configurada en el token */
-  .pc-prices-wrap { margin-top: 2px; }
+  /* margin-top:auto empuja el precio y controles al fondo de la tarjeta — alinea filas */
+  .pc-prices-wrap { margin-top: auto; }
   .pc-prices-header {
     font-size: .5rem;
     font-weight: 900;
@@ -748,8 +791,9 @@ const Portal = {
   token: null,
   tokenData: null,
   productos: [],
-  inventario: {},
-  comprometido: {},
+  snapshot: {},           // ⭐ FUENTE ÚNICA DE VERDAD: { ref: { real, comprometido, disponible, ordenada } }
+  inventario: {},         // legacy (fallback si no hay snapshot)
+  comprometido: {},       // legacy (fallback si no hay snapshot)
   ordenada: {},           // farmers_pt_data — cantidades ordenadas (si token lo habilita)
   productImages: {},
   marcasDisponibles: [],
@@ -933,25 +977,45 @@ async function cargarCatalogo() {
   Portal.productos = JSON.parse(prodDoc.data().v);
   setLoadProgress(15, Portal.productos.length + ' productos cargados');
 
-  // ═══ ETAPA 2: Inventario ═══
-  setLoadProgress(18, 'Consultando inventario en tiempo real...');
+  // ═══ ETAPA 2-4: SNAPSHOT del portal (fuente única de verdad — calculado por el admin) ═══
+  // Reemplaza las consultas separadas de inventario, comprometido y ordenada por una sola
+  // que ya viene con los valores calculados exactamente como los ve el sistema de pedidos.
+  // Estructura: { ref: { real, comprometido, disponible, ordenada } }
+  setLoadProgress(18, 'Sincronizando inventario con sistema de pedidos...');
+  Portal.snapshot = {};  // será el objeto único con todos los datos
+  let snapshotOK = false;
   try {
-    const invDoc = await getDoc(doc(db, 'data', 'inventory'));
-    if (invDoc.exists() && invDoc.data().v) {
-      Portal.inventario = JSON.parse(invDoc.data().v);
+    const snapDoc = await getDoc(doc(db, 'data', 'portal_snapshot'));
+    if (snapDoc.exists() && snapDoc.data().v) {
+      Portal.snapshot = JSON.parse(snapDoc.data().v);
+      const refsCount = Object.keys(Portal.snapshot).length;
+      const updated = snapDoc.data().updatedAt;
+      const minutosDesdeUpdate = updated ? Math.round((Date.now() - updated) / 60000) : 999;
+      console.log('[PORTAL] ✓ Snapshot cargado: ' + refsCount + ' refs, actualizado hace ' + minutosDesdeUpdate + ' min');
+      snapshotOK = true;
+    } else {
+      console.warn('[PORTAL] ⚠ portal_snapshot no existe en Firestore — el admin no lo ha publicado todavía');
     }
-  } catch(e) { console.warn('Sin inventario'); }
-  setLoadProgress(25, 'Inventario sincronizado');
+  } catch(e) { console.warn('[PORTAL] Error leyendo snapshot:', e); }
 
-  // ═══ ETAPA 3: Comprometido ═══
-  setLoadProgress(28, 'Verificando reservas activas...');
-  try {
-    const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
-    if (compDoc.exists() && compDoc.data().v) {
-      Portal.comprometido = JSON.parse(compDoc.data().v);
-    }
-  } catch(e) { console.warn('Sin comprometido'); }
-  setLoadProgress(35, 'Disponibilidad calculada');
+  // Compatibilidad: si no hay snapshot, fallback a las fuentes individuales (legacy)
+  if (!snapshotOK) {
+    setLoadProgress(20, 'Snapshot no disponible — usando fuentes individuales...');
+    try {
+      const invDoc = await getDoc(doc(db, 'data', 'inventory'));
+      if (invDoc.exists() && invDoc.data().v) {
+        Portal.inventario = JSON.parse(invDoc.data().v);
+      }
+    } catch(e) { console.warn('Sin inventario legacy'); }
+    try {
+      const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
+      if (compDoc.exists() && compDoc.data().v) {
+        Portal.comprometido = JSON.parse(compDoc.data().v);
+      }
+    } catch(e) { console.warn('Sin comprometido legacy'); }
+  }
+
+  setLoadProgress(35, 'Inventario sincronizado');
 
   // ═══ ETAPA 4: Ordenada (farmers_pt_data) — solo si el token lo habilita ═══
   if (cfg.mostrarOrdenada) {
@@ -1075,13 +1139,40 @@ function getImagenProducto(p) {
 }
 
 function disponibleProducto(ref) {
+  // ⭐ Fuente única de verdad: snapshot del admin
+  if (Portal.snapshot && Portal.snapshot[ref]) {
+    return parseInt(Portal.snapshot[ref].disponible) || 0;
+  }
+  // Fallback legacy: inventario − comprometido
+  // (estructura legacy: comprometido[ref] puede ser número o {qty: N})
   const real = parseInt(Portal.inventario[ref] || 0);
-  const comp = parseInt(Portal.comprometido[ref] || 0);
+  let comp = 0;
+  const cEntry = Portal.comprometido[ref];
+  if (cEntry !== undefined && cEntry !== null) {
+    if (typeof cEntry === 'object') {
+      comp = parseInt(cEntry.qty || 0) || 0;
+    } else {
+      comp = parseInt(cEntry) || 0;
+    }
+  }
   return Math.max(0, real - comp);
+}
+
+// Cantidad real (sin descontar comprometido) — para mostrar al admin/diagnóstico
+function realProducto(ref) {
+  if (Portal.snapshot && Portal.snapshot[ref]) {
+    return parseInt(Portal.snapshot[ref].real) || 0;
+  }
+  return parseInt(Portal.inventario[ref] || 0);
 }
 
 // Cantidad Ordenada (en camino) — solo si el token lo habilita
 function getOrdenada(ref) {
+  // ⭐ Fuente única de verdad: snapshot
+  if (Portal.snapshot && Portal.snapshot[ref]) {
+    return parseInt(Portal.snapshot[ref].ordenada) || 0;
+  }
+  // Fallback legacy
   if (!Portal.ordenada || !Portal.ordenada[ref]) return 0;
   return parseInt(Portal.ordenada[ref].exOrdenada || 0) || 0;
 }

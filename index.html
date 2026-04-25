@@ -994,25 +994,68 @@ async function cargarCatalogo() {
       console.log('[PORTAL] ✓ Snapshot cargado: ' + refsCount + ' refs, actualizado hace ' + minutosDesdeUpdate + ' min');
       snapshotOK = true;
     } else {
-      console.warn('[PORTAL] ⚠ portal_snapshot no existe en Firestore — el admin no lo ha publicado todavía');
+      console.warn('[PORTAL] ⚠ portal_snapshot no existe en Firestore — calculando en vivo desde fuentes individuales');
     }
   } catch(e) { console.warn('[PORTAL] Error leyendo snapshot:', e); }
 
-  // Compatibilidad: si no hay snapshot, fallback a las fuentes individuales (legacy)
+  // FALLBACK: si no hay snapshot del admin, calcularlo aquí mismo en el portal con la misma lógica
   if (!snapshotOK) {
-    setLoadProgress(20, 'Snapshot no disponible — usando fuentes individuales...');
+    setLoadProgress(20, 'Calculando inventario desde fuentes individuales...');
+
+    // Cargar inventario, sales y pt_data desde Firestore
+    let invMap = {};
+    let salesArr = [];
+    let ptDataMap = {};
+
     try {
       const invDoc = await getDoc(doc(db, 'data', 'inventory'));
       if (invDoc.exists() && invDoc.data().v) {
-        Portal.inventario = JSON.parse(invDoc.data().v);
+        invMap = JSON.parse(invDoc.data().v);
       }
-    } catch(e) { console.warn('Sin inventario legacy'); }
+    } catch(e) { console.warn('[PORTAL] Sin inventory'); }
+
     try {
-      const compDoc = await getDoc(doc(db, 'data', 'comprometido'));
-      if (compDoc.exists() && compDoc.data().v) {
-        Portal.comprometido = JSON.parse(compDoc.data().v);
+      const salesDoc = await getDoc(doc(db, 'data', 'sales'));
+      if (salesDoc.exists() && salesDoc.data().v) {
+        salesArr = JSON.parse(salesDoc.data().v);
       }
-    } catch(e) { console.warn('Sin comprometido legacy'); }
+    } catch(e) { console.warn('[PORTAL] Sin sales'); }
+
+    try {
+      const ptDoc = await getDoc(doc(db, 'data', 'pt_data'));
+      if (ptDoc.exists() && ptDoc.data().v) {
+        ptDataMap = JSON.parse(ptDoc.data().v);
+      }
+    } catch(e) { console.warn('[PORTAL] Sin pt_data'); }
+
+    // Calcular comprometido desde sales (idéntico a ptGetComprometidas del admin)
+    const compMap = {};
+    (salesArr || []).forEach(function(s) {
+      if (s.tipo !== 'pedido') return;
+      (s.items || []).forEach(function(it) {
+        if (!it.r) return;
+        compMap[it.r] = (compMap[it.r] || 0) + (parseInt(it.orden) || 0);
+      });
+    });
+
+    // Construir snapshot por ref
+    const snapBuilt = {};
+    let conStock = 0, bajoStock = 0, agotado = 0, conOrd = 0;
+    Portal.productos.forEach(function(p) {
+      if (!p.r) return;
+      const real = (invMap[p.r] !== undefined) ? (parseInt(invMap[p.r]) || 0) : (parseInt(p.ex) || 0);
+      const comp = compMap[p.r] || 0;
+      const disp = Math.max(0, real - comp);
+      const ord = parseInt((ptDataMap[p.r] || {}).exOrdenada || 0) || 0;
+      snapBuilt[p.r] = { real, comprometido: comp, disponible: disp, ordenada: ord };
+      if (disp === 0) agotado++;
+      else if (disp <= 10) bajoStock++;
+      else conStock++;
+      if (ord > 0) conOrd++;
+    });
+    Portal.snapshot = snapBuilt;
+    console.log('[PORTAL] ✓ Snapshot calculado en vivo: ' + Object.keys(snapBuilt).length + ' refs (' + conStock + ' con stock, ' + bajoStock + ' bajo, ' + agotado + ' agotados, ' + conOrd + ' con Ordenada)');
+    snapshotOK = true;
   }
 
   setLoadProgress(35, 'Inventario sincronizado');
@@ -1049,10 +1092,15 @@ async function cargarCatalogo() {
   }
 
   // Ocultar agotados si configurado
+  // EXCEPCIÓN: si el token tiene mostrarOrdenada=true Y el producto tiene Ordenada > 0,
+  //   el producto debe seguir visible aunque esté agotado, porque viene en camino.
   if (cfg.ocultarAgotados) {
     Portal.productos = Portal.productos.filter(p => {
       const disp = disponibleProducto(p.r);
-      return disp > 0;
+      if (disp > 0) return true; // Tiene stock disponible → visible
+      // Está agotado: solo visible si tiene Ordenada > 0 y el token lo permite mostrar
+      if (cfg.mostrarOrdenada && getOrdenada(p.r) > 0) return true;
+      return false;
     });
   }
 

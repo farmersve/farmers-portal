@@ -280,6 +280,15 @@
   }
   .pc-ord-badge .pc-ord-qty { font-family: var(--f-display); font-weight: 900; font-size: 1rem; line-height: 1; }
 
+  /* v.255 — Portal: sello "Ya compraste esto" (historial de compras del cliente) */
+  /* v.256: versión moderada — tono neutro, discreto, no compite con alertas de stock */
+  .pc-historial-badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px;
+    font-size: .56rem; font-weight: 600; letter-spacing: .2px; background: rgba(255,255,255,.1);
+    color: rgba(255,255,255,.65); border: 1px solid rgba(255,255,255,.18);
+  }
+  .pc-historial-badge .pc-historial-fecha { font-weight: 700; color: rgba(255,255,255,.8); }
+
   /* Datos sobre fondo blanco */
   .pc-data-block { background: var(--f-surface); padding: 14px 16px 4px; }
   .pc-desc-box { margin-bottom: 12px; }
@@ -612,6 +621,7 @@ const Portal = {
   inventario: {},         // legacy (fallback si no hay snapshot)
   comprometido: {},       // legacy (fallback si no hay snapshot)
   ordenada: {},           // farmers_pt_data — cantidades ordenadas (si token lo habilita)
+  historialCompras: {},   // v.255 — ref → { fecha: 'YYYY-MM-DD' } — lo que este cliente ya ha comprado antes
   productImages: {},
   marcasDisponibles: [],
   carrito: {},
@@ -634,6 +644,15 @@ const BRAND_COLORS = {
 };
 function getBrandColor(br) {
   return BRAND_COLORS[String(br || '').toUpperCase()] || '#475569';
+}
+
+// v.255 — Formatea una fecha 'YYYY-MM-DD' o ISO a dd/mm/yyyy para el sello de historial
+function formatearFechaHistorial(fecha) {
+  if (!fecha) return '';
+  const soloFecha = String(fecha).slice(0, 10); // toma 'YYYY-MM-DD' incluso de un ISO completo
+  const partes = soloFecha.split('-');
+  if (partes.length !== 3) return '';
+  return partes[2] + '/' + partes[1] + '/' + partes[0];
 }
 
 // ═══ Navegación entre pantallas ═══
@@ -937,6 +956,45 @@ async function cargarCatalogo() {
     } catch(e) { console.warn('[PORTAL] Error leyendo pt_data:', e); }
   }
   setLoadProgress(40, 'Preparando galería de imágenes...');
+
+  // ═══ ETAPA 4.5: Historial de compras del cliente (v.255) ═══
+  // Busca en las ventas guardadas cuáles referencias le compró ESTE cliente antes,
+  // y guarda la fecha de la última vez. Se compara por RIF primero (más confiable);
+  // si no hay RIF, cae a nombre de cliente. Si algo falla, el catálogo sigue
+  // funcionando normal — el sello es un complemento, nunca bloquea nada.
+  try {
+    setLoadProgress(38, 'Revisando tu historial de compras...');
+    const rifCliente = String(Portal.tokenData.rifEsperado || '').trim().toUpperCase();
+    const nombreCliente = String(Portal.tokenData.clienteNombre || '').trim().toUpperCase();
+    if (rifCliente || nombreCliente) {
+      const salesDoc = await getDoc(doc(db, 'data', 'sales'));
+      if (salesDoc.exists() && salesDoc.data().v) {
+        const ventas = JSON.parse(salesDoc.data().v);
+        const historial = {};
+        ventas.forEach(function(fa){
+          if (!fa) return;
+          const facRif = String(fa.rif || '').trim().toUpperCase();
+          const facNombre = String(fa.clienteNombre || fa.cliente || '').trim().toUpperCase();
+          const esEsteCliente = (rifCliente && facRif === rifCliente) || (!rifCliente && nombreCliente && facNombre === nombreCliente);
+          if (!esEsteCliente) return;
+          const fecha = fa.fechaEmision || fa.fecha || fa.fechaFactura || '';
+          (fa.items || fa.lineas || []).forEach(function(it){
+            const ref = String((it && (it.ref || it.referencia)) || '').toUpperCase();
+            if (!ref) return;
+            // Nos quedamos con la fecha MÁS RECIENTE por referencia
+            if (!historial[ref] || fecha > historial[ref].fecha) {
+              historial[ref] = { fecha: fecha };
+            }
+          });
+        });
+        Portal.historialCompras = historial;
+        console.log('[PORTAL] Historial de compras del cliente: ' + Object.keys(historial).length + ' refs ya compradas antes');
+      }
+    }
+  } catch(e) {
+    console.warn('[PORTAL] No se pudo cargar el historial de compras (no afecta el catálogo):', e);
+  }
+
 
   // ═══ ETAPA 5: Imágenes (40% → 100%) ═══
   await cargarImagenesProductos();
@@ -1343,8 +1401,21 @@ function crearCardProducto(p) {
   }
 
   // Stack de badges vertical junto al REF (no columna separada)
-  const badgesStackInline = (badgeHTML || ordBadgeHTML)
-    ? '<div class="pc-badges-stack">' + badgeHTML + ordBadgeHTML + '</div>'
+  // v.255 — Sello "Ya compraste esto" si este cliente tiene historial de compra de esta ref
+  // v.256: mensaje moderado — discreto, sin gritar, solo para que quede claro sin llamar tanto la atención
+  const histEntry = Portal.historialCompras[p.r];
+  let histBadgeHTML = '';
+  if (histEntry && histEntry.fecha) {
+    const fechaFmt = formatearFechaHistorial(histEntry.fecha);
+    histBadgeHTML =
+      '<div class="pc-historial-badge" title="Ya le compraste este producto antes">' +
+        '<span>Ya comprado</span>' +
+        (fechaFmt ? '<span class="pc-historial-fecha">· ' + fechaFmt + '</span>' : '') +
+      '</div>';
+  }
+
+  const badgesStackInline = (badgeHTML || ordBadgeHTML || histBadgeHTML)
+    ? '<div class="pc-badges-stack">' + badgeHTML + ordBadgeHTML + histBadgeHTML + '</div>'
     : '';
 
   // Imagen o placeholder

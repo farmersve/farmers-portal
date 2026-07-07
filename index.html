@@ -611,6 +611,7 @@ const app = initializeApp({
   projectId: "farmers-app-70a3a"
 });
 const db = getFirestore(app);
+window._pDb = db; // v.257: expuesto solo para diagnóstico por consola (F12) — no cambia ningún comportamiento
 
 // ═══ Estado global ═══
 const Portal = {
@@ -632,6 +633,7 @@ const Portal = {
   pedidoEmitido: null,
   logoB64: null,
 };
+window._pPortal = Portal; // v.257: expuesto solo para diagnóstico por consola (F12) — no cambia ningún comportamiento
 
 // Colores oficiales por marca (idénticos al catálogo admin)
 const BRAND_COLORS = {

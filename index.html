@@ -959,39 +959,76 @@ async function cargarCatalogo() {
   }
   setLoadProgress(40, 'Preparando galería de imágenes...');
 
-  // ═══ ETAPA 4.5: Historial de compras del cliente (v.255) ═══
-  // Busca en las ventas guardadas cuáles referencias le compró ESTE cliente antes,
-  // y guarda la fecha de la última vez. Se compara por RIF primero (más confiable);
-  // si no hay RIF, cae a nombre de cliente. Si algo falla, el catálogo sigue
-  // funcionando normal — el sello es un complemento, nunca bloquea nada.
+  // ═══ ETAPA 4.5: Historial de compras del cliente (v.255, ampliado en v.258) ═══
+  // Busca en DOS fuentes cuáles referencias le compró ESTE cliente antes:
+  //   1) 'data/sales'       — ventas generadas por despacho/pedido normal.
+  //   2) 'data/hcl_facturas' — facturas cargadas por foto/IA (Historial de Clientes).
+  // Se unen ambas porque cada una puede tener ventas que la otra no tiene.
+  // NOTA (conocida y aceptada): las facturas creadas manualmente en CXC con solo
+  // el monto total (sin detalle de referencias) NUNCA podrán aparecer aquí, porque
+  // ese dato simplemente no se registró en ningún lado — no es una limitación de
+  // esta búsqueda, es que la información no existe.
+  // Se compara por RIF primero (más confiable); si no hay RIF, cae a nombre.
+  // Si algo falla, el catálogo sigue funcionando normal — el sello es un
+  // complemento, nunca bloquea nada.
   try {
     setLoadProgress(38, 'Revisando tu historial de compras...');
     const rifCliente = String(Portal.tokenData.rifEsperado || '').trim().toUpperCase();
     const nombreCliente = String(Portal.tokenData.clienteNombre || '').trim().toUpperCase();
+
     if (rifCliente || nombreCliente) {
-      const salesDoc = await getDoc(doc(db, 'data', 'sales'));
-      if (salesDoc.exists() && salesDoc.data().v) {
-        const ventas = JSON.parse(salesDoc.data().v);
-        const historial = {};
-        ventas.forEach(function(fa){
+      const historial = {};
+
+      // Normaliza 'YYYY-MM-DD', ISO completo, o 'DD/MM/YYYY' a 'YYYY-MM-DD'
+      // para poder comparar fechas de ambas fuentes de forma justa.
+      const normalizarFechaISO = function(fecha) {
+        if (!fecha) return '';
+        const s = String(fecha).trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+        const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (m) return m[3] + '-' + m[2] + '-' + m[1];
+        const d = new Date(s);
+        if (!isNaN(d)) return d.toISOString().slice(0, 10);
+        return '';
+      };
+
+      const procesarFacturas = function(facturas) {
+        (facturas || []).forEach(function(fa){
           if (!fa) return;
           const facRif = String(fa.rif || '').trim().toUpperCase();
           const facNombre = String(fa.clienteNombre || fa.cliente || '').trim().toUpperCase();
           const esEsteCliente = (rifCliente && facRif === rifCliente) || (!rifCliente && nombreCliente && facNombre === nombreCliente);
           if (!esEsteCliente) return;
-          const fecha = fa.fechaEmision || fa.fecha || fa.fechaFactura || '';
+          const fechaISO = normalizarFechaISO(fa.fechaEmision || fa.fecha || fa.fechaFactura || '');
+          if (!fechaISO) return; // sin fecha usable, se descarta (no podríamos saber si es "la más reciente")
           (fa.items || fa.lineas || []).forEach(function(it){
             const ref = String((it && (it.ref || it.referencia)) || '').toUpperCase();
             if (!ref) return;
-            // Nos quedamos con la fecha MÁS RECIENTE por referencia
-            if (!historial[ref] || fecha > historial[ref].fecha) {
-              historial[ref] = { fecha: fecha };
+            // Nos quedamos con la fecha MÁS RECIENTE por referencia, sin importar de cuál fuente vino
+            if (!historial[ref] || fechaISO > historial[ref].fecha) {
+              historial[ref] = { fecha: fechaISO };
             }
           });
         });
-        Portal.historialCompras = historial;
-        console.log('[PORTAL] Historial de compras del cliente: ' + Object.keys(historial).length + ' refs ya compradas antes');
+      };
+
+      // Fuente 1: ventas por despacho/pedido normal
+      const salesDoc = await getDoc(doc(db, 'data', 'sales'));
+      if (salesDoc.exists() && salesDoc.data().v) {
+        procesarFacturas(JSON.parse(salesDoc.data().v));
       }
+      // Fuente 2: facturas cargadas por foto/IA (Historial de Clientes)
+      try {
+        const hclDoc = await getDoc(doc(db, 'data', 'hcl_facturas'));
+        if (hclDoc.exists() && hclDoc.data().v) {
+          procesarFacturas(JSON.parse(hclDoc.data().v));
+        }
+      } catch(e2) {
+        console.warn('[PORTAL] No se pudo leer HCL para el historial (se sigue solo con ventas):', e2);
+      }
+
+      Portal.historialCompras = historial;
+      console.log('[PORTAL] Historial de compras del cliente (sales + HCL): ' + Object.keys(historial).length + ' refs ya compradas antes');
     }
   } catch(e) {
     console.warn('[PORTAL] No se pudo cargar el historial de compras (no afecta el catálogo):', e);

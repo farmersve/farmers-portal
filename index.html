@@ -1045,18 +1045,23 @@ async function cargarCatalogo() {
     );
   }
 
-  // Ocultar agotados si configurado
-  // EXCEPCIÓN: si el token tiene mostrarOrdenada=true Y el producto tiene Ordenada > 0,
-  //   el producto debe seguir visible aunque esté agotado, porque viene en camino.
-  if (cfg.ocultarAgotados) {
-    Portal.productos = Portal.productos.filter(p => {
-      const disp = disponibleProducto(p.r);
-      if (disp > 0) return true; // Tiene stock disponible → visible
-      // Está agotado: solo visible si tiene Ordenada > 0 y el token lo permite mostrar
-      if (cfg.mostrarOrdenada && getOrdenada(p.r) > 0) return true;
-      return false;
-    });
-  }
+  // ══════════════════════════════════════════════════════════════════════
+  // REGLA FIJA: si el DISPONIBLE es 0, el producto NO EXISTE para el cliente.
+  // ──────────────────────────────────────────────────────────────────────
+  // "Disponible 0" incluye el caso de stock físico completo pero totalmente
+  // reservado por otro cliente. Es exactamente lo que pasó con EXC420:
+  // 341 unidades físicas, 341 comprometidas, y aun así se pudo pedir.
+  //
+  // Ya NO depende de cfg.ocultarAgotados. Se aplica siempre, para todos
+  // los tokens, porque un cliente no puede comprar lo que ya tiene dueño.
+  // ══════════════════════════════════════════════════════════════════════
+  Portal.productos = Portal.productos.filter(p => {
+    const disp = disponibleProducto(p.r);
+    if (disp > 0) return true;
+    // Única excepción: mercancía EN CAMINO, y solo si el token la habilita.
+    if (cfg.mostrarOrdenada && getOrdenada(p.r) > 0) return true;
+    return false;
+  });
 
   // Sort alfanumérico por REF
   Portal.productos.sort((a, b) =>
@@ -1320,6 +1325,58 @@ function mostrarCatalogo() {
   showScreen('screen-catalog');
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// REFRESCO PERIÓDICO DEL SNAPSHOT
+// ──────────────────────────────────────────────────────────────────────────
+// El portal cargaba el inventario UNA sola vez al abrir. Si el cliente dejaba
+// la pestaña abierta, seguía viendo la foto de ese momento — aunque la
+// mercancía se comprometiera después. Ese fue el origen de la doble reserva:
+// el pedido entró a las 10:21 con un snapshot anterior al compromiso.
+// Ahora se revisa cada 90 segundos y el catálogo se ajusta solo.
+// ══════════════════════════════════════════════════════════════════════════
+async function refrescarSnapshot(motivo) {
+  try {
+    const snapDoc = await getDoc(doc(db, 'data', 'portal_snapshot'));
+    if (!snapDoc.exists() || !snapDoc.data().v) return false;
+    const nuevo = JSON.parse(snapDoc.data().v);
+
+    // Detectar referencias que quedaron sin disponibilidad
+    const desaparecidas = [];
+    Portal.productos.forEach(function(p){
+      const antes = disponibleProducto(p.r);
+      const ahora = nuevo[p.r] ? (parseInt(nuevo[p.r].disponible) || 0) : 0;
+      if (antes > 0 && ahora <= 0) desaparecidas.push(p.r);
+    });
+
+    Portal.snapshot = nuevo;
+
+    if (desaparecidas.length) {
+      const cfg = (Portal.tokenData && Portal.tokenData.configVista) || {};
+      Portal.productos = Portal.productos.filter(function(p){
+        const disp = disponibleProducto(p.r);
+        if (disp > 0) return true;
+        if (cfg.mostrarOrdenada && getOrdenada(p.r) > 0) return true;
+        return false;
+      });
+
+      // Sacar del carrito lo que ya no está disponible
+      const enCarrito = desaparecidas.filter(function(r){ return Portal.carrito[r]; });
+      enCarrito.forEach(function(r){ delete Portal.carrito[r]; });
+
+      if (enCarrito.length) {
+        alert('⚠ Disponibilidad actualizada\n\n' + enCarrito.join(', ') +
+              (enCarrito.length === 1 ? ' ya no está disponible' : ' ya no están disponibles') +
+              '.\n\nOtro cliente reservó esa mercancía. Se retiró de tu carrito.');
+        actualizarCarritoUI();
+      }
+      try { renderProductos(); } catch(e){}
+      console.log('[PORTAL] Snapshot refrescado (' + (motivo||'auto') + ') — ' + desaparecidas.length + ' ref(s) sin disponibilidad');
+    }
+    return true;
+  } catch(e) { console.warn('[PORTAL] refrescarSnapshot:', e); return false; }
+}
+setInterval(function(){ refrescarSnapshot('periodico'); }, 90000);
+
 function renderProductos() {
   const grid = document.getElementById('products-grid');
   grid.innerHTML = '';
@@ -1345,6 +1402,13 @@ function renderProductos() {
           !String(p.br || '').toLowerCase().includes(q) &&
           !String(p.b || '').toLowerCase().includes(q) &&
           !String(p.c || '').toLowerCase().includes(q)) return false;
+    }
+
+    // Red de seguridad: nunca mostrar disponible 0 (salvo Ordenada habilitada)
+    const _dispSeg = disponibleProducto(p.r);
+    if (_dispSeg <= 0) {
+      const _cfgSeg = (Portal.tokenData && Portal.tokenData.configVista) || {};
+      if (!(_cfgSeg.mostrarOrdenada && getOrdenada(p.r) > 0)) return false;
     }
 
     // Filtro de stock — umbrales unificados con el admin
@@ -1550,9 +1614,17 @@ function crearCardProducto(p) {
     qtyInput.value = v;
   });
   if (incBtn) incBtn.addEventListener('click', () => {
+    // ═══ FIX: antes decía "if (disp > 0 && v > disp)". Cuando disp era 0 la
+    // condición NUNCA se cumplía y el cliente podía pedir sin límite algo
+    // completamente comprometido. Causa real de la doble reserva de EXC420.
+    if (disp <= 0) {
+      alert('❌ ' + p.r + ' no tiene unidades disponibles.\n\nTodo el stock está comprometido en otros pedidos.');
+      qtyInput.value = 0;
+      return;
+    }
     const v = (parseInt(qtyInput.value) || 0) + 1;
-    if (disp > 0 && v > disp) {
-      alert('Solo hay ' + disp + ' unidades disponibles de ' + p.r);
+    if (v > disp) {
+      alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r);
       qtyInput.value = disp;
       return;
     }
@@ -1563,8 +1635,14 @@ function crearCardProducto(p) {
     if (q <= 0) {
       delete Portal.carrito[p.r];
     } else {
-      if (disp > 0 && q > disp) {
-        alert('Solo hay ' + disp + ' unidades disponibles de ' + p.r);
+      // ═══ FIX: misma condición defectuosa que en el botón +.
+      if (disp <= 0) {
+        alert('❌ ' + p.r + ' no tiene unidades disponibles.\n\nTodo el stock está comprometido en otros pedidos.');
+        qtyInput.value = 0;
+        return;
+      }
+      if (q > disp) {
+        alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r);
         qtyInput.value = disp;
         return;
       }
@@ -1673,6 +1751,67 @@ function abrirCarrito() {
 async function enviarPedido() {
   const btn = document.getElementById('btn-send-order');
   btn.disabled = true;
+  btn.textContent = 'Verificando disponibilidad...';
+
+  // ══════════════════════════════════════════════════════════════════════
+  // REVALIDACIÓN FINAL CONTRA EL SNAPSHOT MÁS RECIENTE
+  // ──────────────────────────────────────────────────────────────────────
+  // Entre que el cliente arma el carrito y le da enviar pueden pasar
+  // minutos. En ese lapso otro cliente pudo reservar lo mismo, o el
+  // sistema pudo comprometer la mercancía. Sin esta verificación, dos
+  // clientes terminan con derecho sobre el mismo stock.
+  // ══════════════════════════════════════════════════════════════════════
+  try {
+    const snapDoc = await getDoc(doc(db, 'data', 'portal_snapshot'));
+    if (snapDoc.exists() && snapDoc.data().v) {
+      const snapFresco = JSON.parse(snapDoc.data().v);
+      const conflictos = [];
+      Object.values(Portal.carrito).forEach(function(it){
+        const ref = it.producto.r;
+        const s = snapFresco[ref];
+        const dispAhora = s ? (parseInt(s.disponible) || 0) : 0;
+        if (it.qty > dispAhora) {
+          conflictos.push({ ref: ref, desc: it.producto.d || ref, pedido: it.qty, disponible: dispAhora });
+        }
+      });
+
+      if (conflictos.length) {
+        const detalle = conflictos.map(function(c){
+          return '• ' + c.ref + ' — pediste ' + c.pedido +
+                 ', disponible ahora: ' + (c.disponible > 0 ? c.disponible : 'AGOTADO');
+        }).join('\n');
+
+        const ajustar = confirm(
+          '⚠ La disponibilidad cambió mientras armabas el pedido\n\n' + detalle +
+          '\n\nOtro cliente reservó esa mercancía antes.\n\n' +
+          'Aceptar = ajustar automáticamente a lo disponible\n' +
+          'Cancelar = volver al carrito y revisarlo tú'
+        );
+
+        if (!ajustar) {
+          btn.disabled = false;
+          btn.textContent = 'Enviar pedido a Farmers C.A.';
+          return;
+        }
+
+        conflictos.forEach(function(c){
+          if (c.disponible > 0) Portal.carrito[c.ref].qty = c.disponible;
+          else delete Portal.carrito[c.ref];
+        });
+        actualizarCarritoUI();
+
+        if (!Object.keys(Portal.carrito).length) {
+          alert('El carrito quedó vacío: ninguna de esas referencias tiene stock disponible.');
+          btn.disabled = false;
+          btn.textContent = 'Enviar pedido a Farmers C.A.';
+          return;
+        }
+      }
+    }
+  } catch(eVal) {
+    console.warn('[PORTAL] No se pudo revalidar disponibilidad:', eVal);
+  }
+
   btn.textContent = 'Enviando...';
 
   try {

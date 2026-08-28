@@ -1244,17 +1244,38 @@ function mostrarOrdenadaActiva() {
   return !!(Portal.tokenData && Portal.tokenData.configVista && Portal.tokenData.configVista.mostrarOrdenada);
 }
 
-function getPrecio(p) {
-  const moneda = Portal.tokenData.configVista?.moneda || 'USD';
-  if (moneda === 'BCV') return parseFloat(p.bv || p.u || 0);
-  if (moneda === 'TF') return parseFloat(p.t || p.u || 0);
-  return parseFloat(p.u || 0);
+/* ═══════════════════════════════════════════════════════════════════════════
+   v.306 — AJUSTE DE PRECIOS POR CLIENTE (viaja en el token)
+   ─────────────────────────────────────────────────────────────────────────
+   El admin configura en el CRM un aumento (o rebaja) para ESTE cliente —
+   general o por marca, en % o monto fijo, por moneda — y al guardar su link
+   el ajuste queda dentro de configVista.ajustePrecio. El catálogo maestro
+   nunca se toca: cada cliente ve SUS precios. La marca prevalece sobre el
+   general; las monedas no marcadas quedan sin ajuste. */
+function _ajustar(precio, p, monKey) {
+  try {
+    const ap = Portal.tokenData && Portal.tokenData.configVista && Portal.tokenData.configVista.ajustePrecio;
+    if (!ap || !ap.activo) return precio;
+    if (ap.monedas && ap.monedas[monKey] === false) return precio;
+    const regla = (p && p.br && ap.marcas && ap.marcas[p.br]) ? ap.marcas[p.br] : (ap.general || null);
+    if (!regla || !regla.valor) return precio;
+    const v = parseFloat(regla.valor) || 0;
+    const nuevo = (regla.tipo === 'monto') ? (precio + v) : (precio * (1 + v/100));
+    return Math.max(0, Math.round(nuevo * 10000) / 10000);
+  } catch(e) { return precio; }
 }
 
-// Getters específicos para las 3 cajas de precios
-function getPrecioUSD(p) { return parseFloat(p.u || 0); }
-function getPrecioBCV(p) { return parseFloat(p.bv || p.u || 0); }
-function getPrecioTF(p)  { return parseFloat(p.t  || p.u || 0); }
+function getPrecio(p) {
+  const moneda = Portal.tokenData.configVista?.moneda || 'USD';
+  if (moneda === 'BCV') return _ajustar(parseFloat(p.bv || p.u || 0), p, 'BCV');
+  if (moneda === 'TF')  return _ajustar(parseFloat(p.t  || p.u || 0), p, 'TF');
+  return _ajustar(parseFloat(p.u || 0), p, 'USD');
+}
+
+// Getters específicos para las 3 cajas de precios — también ajustados
+function getPrecioUSD(p) { return _ajustar(parseFloat(p.u || 0), p, 'USD'); }
+function getPrecioBCV(p) { return _ajustar(parseFloat(p.bv || p.u || 0), p, 'BCV'); }
+function getPrecioTF(p)  { return _ajustar(parseFloat(p.t  || p.u || 0), p, 'TF'); }
 
 function simboloMoneda() {
   // Los 3 niveles de precio (USD/BCV/TF) son TODOS referencias en dólares.

@@ -1459,10 +1459,38 @@ function renderProductos() {
   }
   noPd.style.display = 'none';
 
-  filtrados.forEach(p => {
-    const card = crearCardProducto(p);
-    grid.appendChild(card);
-  });
+  /* PORTAL LIGERO v2026.09.30: pintar por lotes de 36 con carga automática al
+     hacer scroll — el DOM crece solo cuando el cliente avanza, no de golpe. */
+  if (Portal._imgObs) { Portal._imgObs.disconnect(); }
+  if (Portal._gridObs) { Portal._gridObs.disconnect(); Portal._gridObs = null; }
+  var LOTE = 36, idx = 0;
+  function pintarLote() {
+    var frag = document.createDocumentFragment();
+    for (var n = 0; n < LOTE && idx < filtrados.length; n++, idx++) {
+      frag.appendChild(crearCardProducto(filtrados[idx]));
+    }
+    grid.appendChild(frag);
+    portalObservarImagenes(grid);
+    var cent = document.getElementById('grid-centinela');
+    if (idx < filtrados.length) {
+      if (!cent) {
+        cent = document.createElement('div');
+        cent.id = 'grid-centinela';
+        cent.style.cssText = 'height:2px;grid-column:1/-1;';
+      }
+      grid.appendChild(cent);
+      if (!Portal._gridObs && 'IntersectionObserver' in window) {
+        Portal._gridObs = new IntersectionObserver(function(es){
+          es.forEach(function(en){ if (en.isIntersecting) pintarLote(); });
+        }, { rootMargin: '1000px 0px' });
+      }
+      if (Portal._gridObs) { Portal._gridObs.observe(cent); } else { pintarLote(); }
+    } else if (cent) {
+      if (Portal._gridObs) Portal._gridObs.unobserve(cent);
+      cent.remove();
+    }
+  }
+  pintarLote();
 }
 
 function crearCardProducto(p) {
@@ -1543,8 +1571,12 @@ function crearCardProducto(p) {
     : '';
 
   // Imagen o placeholder
+  /* PORTAL LIGERO v2026.09.30: la imagen NO se incrusta aquí — queda en data-imgsrc
+     y un observador la carga solo cuando la tarjeta se acerca a la pantalla, y la
+     libera cuando queda lejos. Evita que el teléfono decodifique cientos de fotos
+     a la vez (causa del crash por falta de memoria en móviles). */
   const imgHTML = img
-    ? '<div class="pc-image" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '"><img src="' + img + '" alt="' + (p.r || '') + '"></div>'
+    ? '<div class="pc-image" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '"><img alt="' + (p.r || '') + '" decoding="async"></div>'
     : '<div class="pc-image-placeholder">📦</div>';
 
   const card = document.createElement('div');
@@ -1673,9 +1705,38 @@ function crearCardProducto(p) {
     // Re-render solo esta card
     const newCard = crearCardProducto(p);
     card.replaceWith(newCard);
+    portalObservarImagenes(newCard);
   });
 
   return card;
+}
+
+// ═══ PORTAL LIGERO v2026.09.30 — hidratación perezosa de imágenes ═══
+function portalObservarImagenes(scope) {
+  try {
+    var zona = scope || document;
+    if (!('IntersectionObserver' in window)) {
+      // Navegador sin observador (muy raro): cargar directo como antes
+      zona.querySelectorAll('.pc-image[data-imgsrc]').forEach(function(w){
+        var im = w.querySelector('img'); if (im && !im.getAttribute('src')) im.src = w.dataset.imgsrc || '';
+      });
+      return;
+    }
+    if (!Portal._imgObs) {
+      Portal._imgObs = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          var w = en.target, im = w.querySelector('img'); if (!im) return;
+          if (en.isIntersecting) {
+            if (!im.getAttribute('src')) im.src = w.dataset.imgsrc || '';
+          } else if (Math.abs(en.boundingClientRect.top) > (window.innerHeight * 5)) {
+            // Muy lejos de la pantalla: soltar el bitmap para devolver memoria
+            if (im.getAttribute('src')) im.removeAttribute('src');
+          }
+        });
+      }, { rootMargin: '700px 0px 700px 0px' });
+    }
+    zona.querySelectorAll('.pc-image[data-imgsrc]').forEach(function(w){ Portal._imgObs.observe(w); });
+  } catch (e) { console.warn('[PORTAL] lazy imgs:', e); }
 }
 
 // ═══ Lightbox de imagen ═══

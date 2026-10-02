@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FARMERS · Piloto SMS (Fase 0)</title>
+<style>
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#0d1230;color:#e8eaf6;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+  .card{background:#171d45;border:1px solid #2a3170;border-radius:16px;padding:28px 26px;width:min(400px,92vw);box-shadow:0 10px 40px rgba(0,0,0,.45);}
+  h1{font-size:1.05rem;margin:0 0 4px;letter-spacing:.5px;}
+  .sub{font-size:.72rem;color:#8b93c9;margin-bottom:18px;line-height:1.5;}
+  label{font-size:.68rem;font-weight:800;color:#8b93c9;letter-spacing:.6px;display:block;margin:12px 0 5px;}
+  input{width:100%;box-sizing:border-box;background:#0d1230;border:1.5px solid #2a3170;border-radius:9px;color:#fff;padding:11px 13px;font-size:1rem;outline:none;}
+  input:focus{border-color:#6366f1;}
+  button{width:100%;margin-top:14px;background:linear-gradient(135deg,#6366f1,#0d9488);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:.9rem;padding:12px;cursor:pointer;}
+  button:disabled{opacity:.45;cursor:wait;}
+  .log{margin-top:16px;font-size:.72rem;line-height:1.6;background:#0d1230;border:1px solid #2a3170;border-radius:9px;padding:10px 12px;min-height:50px;white-space:pre-wrap;word-break:break-word;}
+  .ok{color:#4ade80;} .err{color:#f87171;} .info{color:#93c5fd;}
+  #paso2{display:none;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 FARMERS · Piloto de SMS</h1>
+  <div class="sub">Fase 0 del candado del portal: esta página SOLO prueba si el código por SMS llega a teléfonos venezolanos. No toca ningún dato del sistema.</div>
+
+  <div id="paso1">
+    <label>TELÉFONO (formato internacional)</label>
+    <input id="tel" type="tel" value="+58" placeholder="+58412XXXXXXX">
+    <button id="btnEnviar">📲 Enviarme el código</button>
+  </div>
+
+  <div id="paso2">
+    <label>CÓDIGO RECIBIDO (6 dígitos)</label>
+    <input id="codigo" type="tel" maxlength="6" placeholder="123456">
+    <button id="btnVerificar">✅ Verificar código</button>
+  </div>
+
+  <div id="recaptcha-container"></div>
+  <div class="log" id="log">Listo. Escribe tu número y pulsa el botón.</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk",
+  authDomain: "farmers-app-70a3a.firebaseapp.com",
+  projectId: "farmers-app-70a3a"
+});
+const auth = getAuth(app);
+auth.languageCode = 'es';
+
+const log = (m, c) => { const el = document.getElementById('log'); el.innerHTML += '\n' + (c ? '<span class="'+c+'">'+m+'</span>' : m); };
+const t0 = {};
+
+let confirmacion = null;
+let verifier = null;
+
+document.getElementById('btnEnviar').onclick = async () => {
+  const tel = document.getElementById('tel').value.trim().replace(/[\s-]/g,'');
+  if (!/^\+\d{10,15}$/.test(tel)) { log('⛔ Formato inválido. Ejemplo: +584121234567', 'err'); return; }
+  const btn = document.getElementById('btnEnviar'); btn.disabled = true;
+  try {
+    if (!verifier) {
+      verifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+    }
+    log('⏳ Enviando SMS a ' + tel + ' …', 'info');
+    t0.envio = Date.now();
+    confirmacion = await signInWithPhoneNumber(auth, tel, verifier);
+    log('✅ SMS DESPACHADO por Google en ' + ((Date.now()-t0.envio)/1000).toFixed(1) + 's. Revisa el teléfono (puede tardar hasta 1-2 min).', 'ok');
+    document.getElementById('paso2').style.display = 'block';
+  } catch (e) {
+    log('⛔ ' + (e.code || '') + ' — ' + (e.message || e), 'err');
+    if ((e.code||'').includes('invalid-app-credential') || (e.code||'').includes('captcha')) log('👉 Pista: falta autorizar el dominio farmersve.github.io en Authentication → Settings → Authorized domains.', 'info');
+    if ((e.code||'').includes('operation-not-allowed')) log('👉 Pista: falta ENCENDER el proveedor Phone en Authentication → Sign-in method.', 'info');
+    if ((e.code||'').includes('too-many-requests')) log('👉 Pista: demasiados intentos seguidos — espera unos minutos.', 'info');
+    try { if (verifier) { verifier.clear(); verifier = null; } } catch(_){}
+  }
+  btn.disabled = false;
+};
+
+document.getElementById('btnVerificar').onclick = async () => {
+  const cod = document.getElementById('codigo').value.trim();
+  if (!/^\d{6}$/.test(cod)) { log('⛔ El código son 6 dígitos.', 'err'); return; }
+  const btn = document.getElementById('btnVerificar'); btn.disabled = true;
+  try {
+    const cred = await confirmacion.confirm(cod);
+    log('🎉 VERIFICADO: ' + cred.user.phoneNumber + ' — el mecanismo QuickSell funciona de punta a punta en tu proyecto.', 'ok');
+    log('📸 Toma la foto de esta pantalla para Claude. (Sesión de prueba cerrada limpia.)', 'info');
+    await signOut(auth);
+  } catch (e) {
+    log('⛔ ' + (e.code || '') + ' — código incorrecto o vencido. Puedes reintentar.', 'err');
+  }
+  btn.disabled = false;
+};
+</script>
+</body>
+</html>

@@ -456,6 +456,31 @@
 </div>
 
 <!-- ══════════ PANTALLA 2: FORMULARIO DATOS ══════════ -->
+<!-- ═══ PORTAL CANDADO v2026.10.02 — verificación por teléfono registrado (OTP por SMS) ═══ -->
+<div id="screen-candado" class="screen">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(160deg,#101540 0%,#1B1F6B 100%);">
+    <div style="background:#fff;border-radius:18px;padding:30px 26px;width:min(420px,94vw);box-shadow:0 14px 50px rgba(0,0,0,.4);">
+      <div style="text-align:center;margin-bottom:6px;font-size:2rem;">🔐</div>
+      <div style="text-align:center;font-weight:900;color:#1B1F6B;font-size:1.05rem;letter-spacing:.3px;">Acceso protegido</div>
+      <div id="cd-sub" style="text-align:center;font-size:.78rem;color:#5a618f;margin:8px 0 18px;line-height:1.55;">Para proteger tu lista de precios, confirma el teléfono registrado.</div>
+      <div id="cd-paso1">
+        <label style="font-size:.66rem;font-weight:800;color:#8b90b8;letter-spacing:.5px;">TELÉFONO REGISTRADO</label>
+        <input id="cd-tel" type="tel" inputmode="tel" placeholder="0412-1234567" style="width:100%;box-sizing:border-box;border:1.5px solid #d6d9ef;border-radius:10px;padding:12px 14px;font-size:1.05rem;margin-top:5px;outline:none;color:#1B1F6B;font-weight:700;">
+        <button id="cd-btn-enviar" style="width:100%;margin-top:14px;background:linear-gradient(135deg,#1B1F6B,#0d9488);color:#fff;border:none;border-radius:11px;padding:13px;font-weight:900;font-size:.9rem;cursor:pointer;">📲 Enviarme el código por SMS</button>
+      </div>
+      <div id="cd-paso2" style="display:none;">
+        <label style="font-size:.66rem;font-weight:800;color:#8b90b8;letter-spacing:.5px;">CÓDIGO RECIBIDO (6 DÍGITOS)</label>
+        <input id="cd-codigo" type="tel" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;box-sizing:border-box;border:1.5px solid #d6d9ef;border-radius:10px;padding:12px 14px;font-size:1.3rem;letter-spacing:6px;text-align:center;margin-top:5px;outline:none;color:#1B1F6B;font-weight:800;">
+        <button id="cd-btn-verificar" style="width:100%;margin-top:14px;background:linear-gradient(135deg,#16a34a,#0d9488);color:#fff;border:none;border-radius:11px;padding:13px;font-weight:900;font-size:.9rem;cursor:pointer;">✅ Verificar y entrar</button>
+        <button id="cd-btn-reenviar" style="width:100%;margin-top:8px;background:none;border:none;color:#1B1F6B;font-weight:700;font-size:.72rem;cursor:pointer;text-decoration:underline;">Reenviar código</button>
+      </div>
+      <div id="cd-msg" style="margin-top:14px;font-size:.74rem;line-height:1.55;color:#5a618f;min-height:18px;"></div>
+      <a id="cd-wa" target="_blank" style="display:block;text-align:center;margin-top:14px;font-size:.7rem;color:#16a34a;font-weight:800;text-decoration:none;">💬 ¿Problemas para entrar? Escríbenos por WhatsApp</a>
+      <div id="candado-recaptcha"></div>
+    </div>
+  </div>
+</div>
+
 <div id="screen-form" class="screen">
   <div class="form-card">
     <div class="form-header">
@@ -604,6 +629,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"; /* PORTAL CANDADO v2026.10.02 */
 
 const app = initializeApp({
   apiKey: "AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk",
@@ -612,6 +638,7 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 window._pDb = db; // v.257: expuesto solo para diagnóstico por consola (F12) — no cambia ningún comportamiento
+const _auth = getAuth(app); _auth.languageCode = 'es'; /* PORTAL CANDADO v2026.10.02 */
 
 // ═══ Estado global ═══
 const Portal = {
@@ -718,16 +745,15 @@ async function validarToken() {
     // Registrar último acceso (fire-and-forget)
     setDoc(doc(db, 'portal_tokens', token), { ultimoAcceso: serverTimestamp() }, { merge: true }).catch(() => {});
 
-    // Pre-llenar datos
-    if (data.clienteNombre) {
-      document.getElementById('form-welcome-title').textContent = 'Bienvenido';
-      document.getElementById('form-client-name').textContent = data.clienteNombre;
-      document.getElementById('cli-razon').value = data.clienteNombre || '';
-      document.getElementById('cli-rif').value = data.rifEsperado || '';
-    }
-
     clearTimeout(safetyTimeout);
-    showScreen('screen-form');
+    /* PORTAL CANDADO v2026.10.02: aduana por teléfono registrado */
+    var _gate = candadoEstado(data);
+    if (_gate === 'otp') { candadoMostrar(data); return; }
+    if (_gate === 'bloqueado') {
+      mostrarError('Tu acceso al catálogo requiere activación: aún no tienes un teléfono registrado en Farmers C.A. Escríbenos por WhatsApp al 0412-0445797 y lo activamos en minutos.');
+      return;
+    }
+    entrarAlPortal(data);
   } catch (e) {
     clearTimeout(safetyTimeout);
     console.error('[Portal] Error validando token:', e);
@@ -2121,6 +2147,140 @@ window.addEventListener('unhandledrejection', function(ev) {
 });
 
 // ═══ Inicio ═══
+/* ═══ PORTAL CANDADO v2026.10.02 ═══════════════════════════════════════════
+   Verificación de identidad por teléfono registrado + código SMS (OTP).
+   - El teléfono del cliente NUNCA viaja legible: el token solo trae su
+     huella SHA-256 (telHash) y una pista (telHint = últimos 2 dígitos).
+   - Dispositivo recordado: verificación una sola vez por aparato
+     (marcador local atado al telHash; si Farmers cambia el teléfono,
+     el candado se re-arma solo).
+   - 3 intentos de número fallidos → espera de 5 minutos.
+   - Modo por token: candado='estricto' exige teléfono registrado;
+     ausente o 'suave' deja pasar a clientes sin teléfono (transición).  */
+const CANDADO_WA = '584120445797';
+
+function _cdNorm(t){
+  var d = String(t||'').replace(/\D/g,'');
+  if (!d) return '';
+  if (d.slice(0,2) === '58') { /* ya internacional */ }
+  else if (d.charAt(0) === '0') d = '58' + d.slice(1);
+  else if (d.charAt(0) === '4' && d.length === 10) d = '58' + d;
+  return (d.length >= 12 && d.length <= 13 && d.slice(0,2) === '58') ? d : '';
+}
+async function _cdHash(norm){
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function candadoEstado(data){
+  try {
+    var modo = (data.candado === 'estricto') ? 'estricto' : 'suave';
+    if (!data.telHash) return (modo === 'estricto') ? 'bloqueado' : 'entrar';
+    var m = null; try { m = JSON.parse(localStorage.getItem('farmers_candado_' + Portal.token) || 'null'); } catch(e){}
+    if (m && m.h === data.telHash) return 'entrar';
+    return 'otp';
+  } catch(e){ return 'entrar'; } /* ante cualquier falla interna, no frenar la venta */
+}
+function entrarAlPortal(data){
+  if (data.clienteNombre) {
+    document.getElementById('form-welcome-title').textContent = 'Bienvenido';
+    document.getElementById('form-client-name').textContent = data.clienteNombre;
+    document.getElementById('cli-razon').value = data.clienteNombre || '';
+    document.getElementById('cli-rif').value = data.rifEsperado || '';
+  }
+  showScreen('screen-form');
+  instalarMarcaAgua(data.clienteNombre || '');
+}
+function instalarMarcaAgua(nombre){
+  try {
+    if (!nombre || document.getElementById('fw-marca')) return;
+    var d = document.createElement('div');
+    d.id = 'fw-marca';
+    d.style.cssText = 'position:fixed;inset:-25%;z-index:999999;pointer-events:none;opacity:.045;transform:rotate(-22deg);display:flex;flex-wrap:wrap;gap:90px 110px;align-content:space-around;justify-content:space-around;overflow:hidden;';
+    var txt = nombre + ' · ' + new Date().toLocaleDateString('es-VE');
+    for (var i = 0; i < 60; i++) {
+      var sp = document.createElement('span');
+      sp.textContent = txt;
+      sp.style.cssText = 'font-weight:900;font-size:15px;color:#1B1F6B;white-space:nowrap;';
+      d.appendChild(sp);
+    }
+    document.body.appendChild(d);
+  } catch(e){}
+}
+function _cdMsg(html, color){
+  var el = document.getElementById('cd-msg');
+  if (el) { el.innerHTML = html; el.style.color = color || '#5a618f'; }
+}
+function candadoMostrar(data){
+  var sub = document.getElementById('cd-sub');
+  if (sub) sub.innerHTML = 'Catálogo exclusivo de <b>' + (data.clienteNombre || 'tu empresa') + '</b>.<br>Confirma el teléfono registrado' + (data.telHint ? ' (termina en <b>••' + data.telHint + '</b>)' : '') + ' y te enviaremos un código por SMS.';
+  var wa = document.getElementById('cd-wa');
+  if (wa) wa.href = 'https://wa.me/' + CANDADO_WA + '?text=' + encodeURIComponent('Hola Farmers, soy ' + (data.clienteNombre || 'cliente') + ' y tengo problemas para entrar al catálogo.');
+  showScreen('screen-candado');
+
+  var conf = null, verifier = null, enviando = false;
+  function bloqueo(){
+    var b = null; try { b = JSON.parse(localStorage.getItem('farmers_candado_try_' + Portal.token) || 'null'); } catch(e){}
+    if (b && b.hasta && Date.now() < b.hasta) return Math.ceil((b.hasta - Date.now()) / 60000);
+    return 0;
+  }
+  function fallo(){
+    var b = null; try { b = JSON.parse(localStorage.getItem('farmers_candado_try_' + Portal.token) || 'null'); } catch(e){}
+    b = b || { n: 0 };
+    b.n = (b.n || 0) + 1;
+    if (b.n >= 3) { b.hasta = Date.now() + 5 * 60000; b.n = 0; }
+    localStorage.setItem('farmers_candado_try_' + Portal.token, JSON.stringify(b));
+    return b.hasta && Date.now() < b.hasta;
+  }
+  async function enviar(){
+    if (enviando) return;
+    var min = bloqueo();
+    if (min) { _cdMsg('⛔ Demasiados intentos. Espera ' + min + ' minuto(s) e intenta de nuevo.', '#dc2626'); return; }
+    var norm = _cdNorm(document.getElementById('cd-tel').value);
+    if (!norm) { _cdMsg('⛔ Escribe un teléfono válido (ej. 0412-1234567).', '#dc2626'); return; }
+    enviando = true;
+    try {
+      _cdMsg('⏳ Verificando…');
+      var h = await _cdHash(norm);
+      if (h !== data.telHash) {
+        var cast = fallo();
+        _cdMsg('⛔ Ese número no coincide con el registrado' + (data.telHint ? ' (pista: termina en ••' + data.telHint + ')' : '') + '.' + (cast ? ' Demasiados intentos: espera 5 minutos.' : ''), '#dc2626');
+        enviando = false; return;
+      }
+      if (!verifier) verifier = new RecaptchaVerifier(_auth, 'candado-recaptcha', { size: 'invisible' });
+      _cdMsg('⏳ Enviando código por SMS…');
+      conf = await signInWithPhoneNumber(_auth, '+' + norm, verifier);
+      document.getElementById('cd-paso2').style.display = 'block';
+      _cdMsg('✅ Código enviado. Revisa tus mensajes (puede tardar 1-2 min).', '#16a34a');
+      try { document.getElementById('cd-codigo').focus(); } catch(e){}
+    } catch(e) {
+      var c = e && e.code || '';
+      if (c.indexOf('too-many-requests') >= 0) _cdMsg('⛔ Demasiados envíos seguidos. Espera unos minutos.', '#dc2626');
+      else if (c.indexOf('invalid-phone-number') >= 0) _cdMsg('⛔ Número inválido para SMS.', '#dc2626');
+      else _cdMsg('⛔ No se pudo enviar el SMS (' + (c || e.message) + '). Intenta de nuevo o escríbenos por WhatsApp.', '#dc2626');
+      try { if (verifier) { verifier.clear(); verifier = null; } } catch(_){}
+    }
+    enviando = false;
+  }
+  document.getElementById('cd-btn-enviar').onclick = enviar;
+  document.getElementById('cd-btn-reenviar').onclick = enviar;
+  document.getElementById('cd-btn-verificar').onclick = async function(){
+    var cod = (document.getElementById('cd-codigo').value || '').trim();
+    if (!/^\d{6}$/.test(cod)) { _cdMsg('⛔ El código son 6 dígitos.', '#dc2626'); return; }
+    if (!conf) { _cdMsg('⛔ Primero pide el código.', '#dc2626'); return; }
+    try {
+      _cdMsg('⏳ Verificando código…');
+      await conf.confirm(cod);
+      try { await signOut(_auth); } catch(e){}
+      localStorage.setItem('farmers_candado_' + Portal.token, JSON.stringify({ h: data.telHash, t: Date.now() }));
+      localStorage.removeItem('farmers_candado_try_' + Portal.token);
+      _cdMsg('🎉 Verificado. Entrando…', '#16a34a');
+      entrarAlPortal(data);
+    } catch(e) {
+      _cdMsg('⛔ Código incorrecto o vencido. Reintenta o pide uno nuevo.', '#dc2626');
+    }
+  };
+}
+
 validarToken();
 </script>
 </body>

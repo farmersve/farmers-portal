@@ -465,7 +465,11 @@
       <div id="cd-sub" style="text-align:center;font-size:.78rem;color:#5a618f;margin:8px 0 18px;line-height:1.55;">Para proteger tu lista de precios, confirma el teléfono registrado.</div>
       <div id="cd-paso1">
         <label style="font-size:.66rem;font-weight:800;color:#8b90b8;letter-spacing:.5px;">TELÉFONO REGISTRADO</label>
-        <input id="cd-tel" type="tel" inputmode="tel" placeholder="0412-1234567" style="width:100%;box-sizing:border-box;border:1.5px solid #d6d9ef;border-radius:10px;padding:12px 14px;font-size:1.05rem;margin-top:5px;outline:none;color:#1B1F6B;font-weight:700;">
+        <div style="display:flex;gap:8px;margin-top:5px;"><!-- v2026.10.02b: prefijo +58 fijo -->
+          <div style="display:flex;align-items:center;gap:5px;background:#eef0fb;border:1.5px solid #d6d9ef;border-radius:10px;padding:0 12px;font-weight:900;color:#1B1F6B;font-size:1rem;white-space:nowrap;">🇻🇪 +58</div>
+          <input id="cd-tel" type="tel" inputmode="tel" placeholder="412-1234567" style="flex:1;min-width:0;box-sizing:border-box;border:1.5px solid #d6d9ef;border-radius:10px;padding:12px 14px;font-size:1.05rem;outline:none;color:#1B1F6B;font-weight:700;">
+        </div>
+        <div style="font-size:.63rem;color:#8b90b8;margin-top:5px;">Escribe tu número de siempre — con o sin el 0 inicial, da igual.</div>
         <button id="cd-btn-enviar" style="width:100%;margin-top:14px;background:linear-gradient(135deg,#1B1F6B,#0d9488);color:#fff;border:none;border-radius:11px;padding:13px;font-weight:900;font-size:.9rem;cursor:pointer;">📲 Enviarme el código por SMS</button>
       </div>
       <div id="cd-paso2" style="display:none;">

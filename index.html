@@ -535,6 +535,9 @@
     </button>
   </div>
 
+  <!-- ═══ PORTAL VENDE-SOLO v2026.10.03: pedidos recientes · frecuentes ═══ -->
+  <div id="pv-zona" style="display:none;padding:12px 14px 2px;"></div>
+
   <!-- ── Banner corporativo mayorista ── -->
   <div class="welcome-banner">
     <div class="wb-content">
@@ -632,7 +635,7 @@
 <!-- ══════════ Firebase + lógica portal ══════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, serverTimestamp, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"; /* PORTAL CANDADO v2026.10.02 */
 
 const app = initializeApp({
@@ -1372,8 +1375,10 @@ function mostrarCatalogo() {
     });
   });
 
+  pvCalcularNuevos();      /* v2026.10.03 */
   renderProductos();
   showScreen('screen-catalog');
+  portalHistorialCargar(); /* v2026.10.03 */
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1605,9 +1610,12 @@ function crearCardProducto(p) {
      y un observador la carga solo cuando la tarjeta se acerca a la pantalla, y la
      libera cuando queda lejos. Evita que el teléfono decodifique cientos de fotos
      a la vez (causa del crash por falta de memoria en móviles). */
+  const nuevoTag = (Portal.refsNuevas && Portal.refsNuevas.has(p.r))
+    ? '<div style="position:absolute;top:8px;left:8px;background:#dc2626;color:#fff;font-size:.56rem;font-weight:900;padding:3px 8px;border-radius:999px;z-index:2;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.25);">NUEVO</div>'
+    : ''; /* v2026.10.03 */
   const imgHTML = img
-    ? '<div class="pc-image" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '"><img alt="' + (p.r || '') + '" decoding="async"></div>'
-    : '<div class="pc-image-placeholder">📦</div>';
+    ? '<div class="pc-image" style="position:relative;" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '">' + nuevoTag + '<img alt="' + (p.r || '') + '" decoding="async"></div>'
+    : '<div class="pc-image-placeholder" style="position:relative;">' + nuevoTag + '📦</div>';
 
   const card = document.createElement('div');
   card.className = 'product-card' + (disp === 0 ? ' agotado' : '');
@@ -1981,6 +1989,7 @@ document.getElementById('btn-new-order').addEventListener('click', () => {
   actualizarCarritoUI();
   renderProductos();
   showScreen('screen-catalog');
+  portalHistorialCargar(); /* v2026.10.03 */
 });
 
 function descargarPDF() {
@@ -2284,6 +2293,114 @@ function candadoMostrar(data){
     }
   };
 }
+
+/* ═══ PORTAL VENDE-SOLO v2026.10.03 ════════════════════════════════════════
+   1) Repetir pedido  2) Tus productos de siempre  3) Rastreo de estado
+   4) Etiqueta NUEVO (refs que no estaban en la visita anterior del equipo) */
+Portal.misPedidos = [];
+Portal.refsNuevas = new Set();
+
+function _pvPrecio(p){
+  var m = Portal.tokenData.configVista?.moneda || 'USD';
+  var u = parseFloat(p.u || 0), bv = parseFloat(p.bv || p.u || 0), t = parseFloat(p.t || p.u || 0);
+  return m === 'BCV' ? bv : (m === 'TF' ? t : u);
+}
+function pvCalcularNuevos(){
+  try {
+    var k = 'farmers_refs_vistas_' + Portal.token;
+    var prev = JSON.parse(localStorage.getItem(k) || 'null');
+    var act = (Portal.productos || []).map(function(p){ return p.r; });
+    if (prev && prev.length) {
+      var sv = new Set(prev);
+      act.forEach(function(r){ if (!sv.has(r)) Portal.refsNuevas.add(r); });
+    }
+    localStorage.setItem(k, JSON.stringify(act));
+  } catch(e){}
+}
+async function portalHistorialCargar(){
+  try {
+    var qs = await getDocs(query(collection(db, 'portal_pedidos'), where('token', '==', Portal.token)));
+    var arr = [];
+    qs.forEach(function(d){ var x = d.data(); x._id = d.id; arr.push(x); });
+    arr.sort(function(a,b){ return String(b.fechaStr||'').localeCompare(String(a.fechaStr||'')); });
+    Portal.misPedidos = arr;
+    portalVendeSoloRender();
+  } catch(e){ console.warn('[PV] historial:', e); }
+}
+function _pvEstadoBadge(e){
+  var m = {
+    pendiente:  ['🟡','RECIBIDO','#b45309','#fef3c7'],
+    procesado:  ['🔵','EN PREPARACIÓN','#1d4ed8','#dbeafe'],
+    embalado:   ['📦','EMBALADO','#92400e','#fde68a'],
+    despachado: ['🚚','DESPACHADO','#166534','#dcfce7'],
+    rechazado:  ['⛔','NO PROCESADO','#991b1b','#fee2e2']
+  };
+  var v = m[e] || m.pendiente;
+  return '<span style="background:'+v[3]+';color:'+v[2]+';font-weight:900;font-size:.58rem;padding:3px 8px;border-radius:999px;white-space:nowrap;">'+v[0]+' '+v[1]+'</span>';
+}
+function portalVendeSoloRender(){
+  var z = document.getElementById('pv-zona'); if (!z) return;
+  var html = '';
+  var peds = Portal.misPedidos.slice(0, 3);
+  if (peds.length) {
+    html += '<div style="font-weight:900;color:#1B1F6B;font-size:.78rem;letter-spacing:.4px;margin:2px 0 8px;">🔄 TUS PEDIDOS RECIENTES</div>';
+    html += '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;">';
+    peds.forEach(function(pd, i){
+      var f = (pd.fechaStr||'').slice(0,10).split('-').reverse().join('/');
+      html += '<div style="min-width:232px;background:#fff;border:1.5px solid #e2e5f5;border-radius:14px;padding:12px 14px;flex:0 0 auto;box-shadow:0 2px 8px rgba(27,31,107,.06);">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
+        + '<span style="font-weight:900;color:#1B1F6B;font-size:.72rem;">' + f + '</span>' + _pvEstadoBadge(pd.estado) + '</div>'
+        + '<div style="font-size:.64rem;color:#5a618f;margin:6px 0 10px;">' + (pd.items||[]).length + ' productos · ' + (pd.totalQty||0) + ' uds</div>'
+        + '<button onclick="pvRepetir(' + i + ')" style="width:100%;background:linear-gradient(135deg,#1B1F6B,#0d9488);color:#fff;border:none;border-radius:9px;padding:9px;font-weight:900;font-size:.68rem;cursor:pointer;letter-spacing:.3px;">🔄 REPETIR PEDIDO</button>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+  var cnt = {};
+  Portal.misPedidos.forEach(function(pd){ (pd.items||[]).forEach(function(it){ cnt[it.ref] = (cnt[it.ref]||0) + (parseInt(it.qty)||0); }); });
+  var top = Object.keys(cnt)
+    .sort(function(a,b){ return cnt[b]-cnt[a]; })
+    .filter(function(r){ return (Portal.productos||[]).find(function(p){ return p.r===r; }) && disponibleProducto(r) > 0; })
+    .slice(0, 8);
+  if (top.length) {
+    html += '<div style="font-weight:900;color:#1B1F6B;font-size:.78rem;letter-spacing:.4px;margin:10px 0 8px;">⭐ TUS PRODUCTOS DE SIEMPRE</div>'
+      + '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;">';
+    top.forEach(function(r){
+      var p = Portal.productos.find(function(x){ return x.r===r; });
+      html += '<button onclick="pvAddFrecuente(\'' + r + '\')" style="flex:0 0 auto;background:#fff;border:1.5px solid #e2e5f5;border-radius:999px;padding:8px 13px;font-size:.64rem;font-weight:800;color:#1B1F6B;cursor:pointer;white-space:nowrap;">+ ' + r + ' · ' + String(p.d||'').slice(0,22) + '</button>';
+    });
+    html += '</div>';
+  }
+  z.style.display = html ? 'block' : 'none';
+  z.innerHTML = html;
+}
+window.pvRepetir = function(i){
+  var pd = Portal.misPedidos[i]; if (!pd) return;
+  var ok = 0, ajust = [], fuera = [];
+  (pd.items||[]).forEach(function(it){
+    var p = (Portal.productos||[]).find(function(x){ return x.r === it.ref; });
+    var disp = p ? disponibleProducto(it.ref) : 0;
+    if (!p || disp <= 0) { fuera.push(it.ref); return; }
+    var q = Math.min(parseInt(it.qty)||0, disp);
+    if (q < (parseInt(it.qty)||0)) ajust.push(it.ref + ' (' + q + '/' + it.qty + ')');
+    Portal.carrito[it.ref] = { producto: p, qty: q, precio: _pvPrecio(p) };
+    ok++;
+  });
+  actualizarCarritoUI();
+  renderProductos();
+  var msg = '🔄 Pedido cargado al carrito: ' + ok + ' productos.';
+  if (ajust.length) msg += '\n⚠ Ajustados a lo disponible hoy: ' + ajust.join(', ');
+  if (fuera.length) msg += '\n⛔ Sin disponibilidad hoy: ' + fuera.join(', ');
+  alert(msg + '\n\nRevisa el carrito 🛒 y envíalo cuando estés listo.');
+};
+window.pvAddFrecuente = function(r){
+  var p = (Portal.productos||[]).find(function(x){ return x.r === r; }); if (!p) return;
+  var disp = disponibleProducto(r); if (disp <= 0) return;
+  var ya = Portal.carrito[r] ? Portal.carrito[r].qty : 0;
+  Portal.carrito[r] = { producto: p, qty: Math.min(ya + 1, disp), precio: _pvPrecio(p) };
+  actualizarCarritoUI();
+  renderProductos();
+};
 
 validarToken();
 </script>

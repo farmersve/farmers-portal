@@ -431,6 +431,40 @@
   }
 
 </style>
+<style id="fv-restyle">
+/* ═══ RESTYLE v2026.10.04 — dupla azul→verde azulado protagonista; naranja pasa a reparto ═══ */
+:root { --f-teal: #0d9488; --f-teal-deep: #0b7d73; --f-action: linear-gradient(135deg, var(--f-navy) 0%, var(--f-teal) 100%); }
+
+/* La ACCIÓN DE COMPRA viste la dupla de la casa (misma del candado) */
+.ch-cart-btn { background: var(--f-action); box-shadow: 0 6px 16px rgba(13,148,136,.38); }
+.ch-cart-badge { color: var(--f-teal-deep); }
+.cart-send-btn { background: var(--f-action); box-shadow: 0 8px 22px rgba(13,148,136,.4); }
+.pc-add-btn { background: var(--f-action); }
+.pc-add-btn:hover:not(:disabled) { box-shadow: 0 7px 18px rgba(13,148,136,.48); }
+
+/* Acentos que eran naranja → sobrios y elegantes */
+.welcome-banner { border-bottom: 3px solid var(--f-teal); }
+.wb-eyebrow { color: #7de3d8; }
+.form-client-name { color: var(--f-navy); }
+.form-divider { background: linear-gradient(90deg, var(--f-navy), var(--f-teal)); }
+.spinner { border-top-color: #7de3d8; }
+.lp-percent { color: var(--f-navy); }
+.lp-fill { background: linear-gradient(90deg, var(--f-navy), var(--f-teal)); background-size: 200% 100%; }
+.lp-status .lp-dot { background: var(--f-teal); }
+.stock-pill.ord.active { background: var(--f-navy-soft); border-color: var(--f-navy-soft); color: #fff; box-shadow: 0 3px 10px rgba(27,31,107,.32); }
+.pc-price-single.tf { background: linear-gradient(135deg, #2a2f8f 0%, #4338ca 100%); }
+
+/* Números HÉROE: el cliente decide leyendo precio y referencia */
+.pc-price-single-val { font-size: 2.35rem; }
+.pc-ref { font-size: 2.15rem; }
+
+/* Acabado premium de tarjeta */
+.product-card { transition: transform .18s ease, box-shadow .22s ease; }
+@media (hover: hover) { .product-card:hover { transform: translateY(-3px); box-shadow: var(--f-shadow-lg); } }
+
+/* El naranja conserva UN solo escenario estelar: la escasez honesta */
+.pc-stock-low { background: var(--f-orange); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(244,123,62,.4); }
+</style>
 </head>
 <body>
 

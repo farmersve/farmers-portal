@@ -2208,23 +2208,6 @@ function entrarAlPortal(data){
     document.getElementById('cli-rif').value = data.rifEsperado || '';
   }
   showScreen('screen-form');
-  instalarMarcaAgua(data.clienteNombre || '');
-}
-function instalarMarcaAgua(nombre){
-  try {
-    if (!nombre || document.getElementById('fw-marca')) return;
-    var d = document.createElement('div');
-    d.id = 'fw-marca';
-    d.style.cssText = 'position:fixed;inset:-25%;z-index:999999;pointer-events:none;opacity:.045;transform:rotate(-22deg);display:flex;flex-wrap:wrap;gap:90px 110px;align-content:space-around;justify-content:space-around;overflow:hidden;';
-    var txt = (Portal._esMaster ? 'FARMERS C.A. · DIRECCIÓN' : nombre) + ' · ' + new Date().toLocaleDateString('es-VE');
-    for (var i = 0; i < 60; i++) {
-      var sp = document.createElement('span');
-      sp.textContent = txt;
-      sp.style.cssText = 'font-weight:900;font-size:15px;color:#1B1F6B;white-space:nowrap;';
-      d.appendChild(sp);
-    }
-    document.body.appendChild(d);
-  } catch(e){}
 }
 function _cdMsg(html, color){
   var el = document.getElementById('cd-msg');
@@ -2354,16 +2337,15 @@ function portalVendeSoloRender(){
   var html = '';
   var peds = Portal.misPedidos.slice(0, 3);
   if (peds.length) {
-    html += '<div style="font-weight:900;color:#1B1F6B;font-size:.78rem;letter-spacing:.4px;margin:2px 0 8px;">🔄 TUS PEDIDOS RECIENTES</div>';
+    html += '<div style="font-weight:900;color:#1B1F6B;font-size:.78rem;letter-spacing:.4px;margin:2px 0 8px;">📦 SEGUIMIENTO DE TUS PEDIDOS</div>'; /* v2026.10.03c */
     html += '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;">';
     peds.forEach(function(pd, i){
       var f = (pd.fechaStr||'').slice(0,10).split('-').reverse().join('/');
       html += '<div style="min-width:232px;background:#fff;border:1.5px solid #e2e5f5;border-radius:14px;padding:12px 14px;flex:0 0 auto;box-shadow:0 2px 8px rgba(27,31,107,.06);">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
         + '<span style="font-weight:900;color:#1B1F6B;font-size:.72rem;">' + f + '</span>' + _pvEstadoBadge(pd.estado) + '</div>'
-        + '<div style="font-size:.64rem;color:#5a618f;margin:6px 0 10px;">' + (pd.items||[]).length + ' productos · ' + (pd.totalQty||0) + ' uds</div>'
-        + '<button onclick="pvRepetir(' + i + ')" style="width:100%;background:linear-gradient(135deg,#1B1F6B,#0d9488);color:#fff;border:none;border-radius:9px;padding:9px;font-weight:900;font-size:.68rem;cursor:pointer;letter-spacing:.3px;">🔄 REPETIR PEDIDO</button>'
-        + '</div>';
+        + '<div style="font-size:.64rem;color:#5a618f;margin:6px 0 2px;">' + (pd.items||[]).length + ' productos · ' + (pd.totalQty||0) + ' uds</div>'
+        + '</div>'; /* v2026.10.03c: sin botón repetir */
     });
     html += '</div>';
   }
@@ -2385,25 +2367,6 @@ function portalVendeSoloRender(){
   z.style.display = html ? 'block' : 'none';
   z.innerHTML = html;
 }
-window.pvRepetir = function(i){
-  var pd = Portal.misPedidos[i]; if (!pd) return;
-  var ok = 0, ajust = [], fuera = [];
-  (pd.items||[]).forEach(function(it){
-    var p = (Portal.productos||[]).find(function(x){ return x.r === it.ref; });
-    var disp = p ? disponibleProducto(it.ref) : 0;
-    if (!p || disp <= 0) { fuera.push(it.ref); return; }
-    var q = Math.min(parseInt(it.qty)||0, disp);
-    if (q < (parseInt(it.qty)||0)) ajust.push(it.ref + ' (' + q + '/' + it.qty + ')');
-    Portal.carrito[it.ref] = { producto: p, qty: q, precio: _pvPrecio(p) };
-    ok++;
-  });
-  actualizarCarritoUI();
-  renderProductos();
-  var msg = '🔄 Pedido cargado al carrito: ' + ok + ' productos.';
-  if (ajust.length) msg += '\n⚠ Ajustados a lo disponible hoy: ' + ajust.join(', ');
-  if (fuera.length) msg += '\n⛔ Sin disponibilidad hoy: ' + fuera.join(', ');
-  alert(msg + '\n\nRevisa el carrito 🛒 y envíalo cuando estés listo.');
-};
 window.pvAddFrecuente = function(r){
   var p = (Portal.productos||[]).find(function(x){ return x.r === r; }); if (!p) return;
   var disp = disponibleProducto(r); if (disp <= 0) return;

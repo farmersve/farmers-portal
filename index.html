@@ -2171,6 +2171,10 @@ window.addEventListener('unhandledrejection', function(ev) {
    - Modo por token: candado='estricto' exige teléfono registrado;
      ausente o 'suave' deja pasar a clientes sin teléfono (transición).  */
 const CANDADO_WA = '584120445797';
+/* LLAVE MAESTRA v2026.10.03b: huella SHA-256 del teléfono del director.
+   Permite supervisar cualquier portal verificando con SU propio SMS.
+   El número nunca aparece legible aquí — solo su huella. */
+const CANDADO_MASTER_HASH = '2a23ce948835538ef187e06c0d6a1899c119c699b5bd7f5e44ebb70458cbb530';
 
 function _cdNorm(t){
   var d = String(t||'').replace(/\D/g,'');
@@ -2186,8 +2190,11 @@ async function _cdHash(norm){
 }
 function candadoEstado(data){
   try {
+    /* v2026.10.03b: pase maestro recordado — vale para TODOS los portales en este equipo */
+    var mm = null; try { mm = JSON.parse(localStorage.getItem('farmers_candado_master') || 'null'); } catch(e){}
+    if (mm && mm.h === CANDADO_MASTER_HASH) { Portal._esMaster = true; return 'entrar'; }
     var modo = (data.candado === 'estricto') ? 'estricto' : 'suave';
-    if (!data.telHash) return (modo === 'estricto') ? 'bloqueado' : 'entrar';
+    if (!data.telHash) return (modo === 'estricto') ? 'otp' : 'entrar'; /* estricto sin tel: la aduana queda abierta solo para la llave maestra */
     var m = null; try { m = JSON.parse(localStorage.getItem('farmers_candado_' + Portal.token) || 'null'); } catch(e){}
     if (m && m.h === data.telHash) return 'entrar';
     return 'otp';
@@ -2209,7 +2216,7 @@ function instalarMarcaAgua(nombre){
     var d = document.createElement('div');
     d.id = 'fw-marca';
     d.style.cssText = 'position:fixed;inset:-25%;z-index:999999;pointer-events:none;opacity:.045;transform:rotate(-22deg);display:flex;flex-wrap:wrap;gap:90px 110px;align-content:space-around;justify-content:space-around;overflow:hidden;';
-    var txt = nombre + ' · ' + new Date().toLocaleDateString('es-VE');
+    var txt = (Portal._esMaster ? 'FARMERS C.A. · DIRECCIÓN' : nombre) + ' · ' + new Date().toLocaleDateString('es-VE');
     for (var i = 0; i < 60; i++) {
       var sp = document.createElement('span');
       sp.textContent = txt;
@@ -2225,12 +2232,14 @@ function _cdMsg(html, color){
 }
 function candadoMostrar(data){
   var sub = document.getElementById('cd-sub');
-  if (sub) sub.innerHTML = 'Catálogo exclusivo de <b>' + (data.clienteNombre || 'tu empresa') + '</b>.<br>Confirma el teléfono registrado' + (data.telHint ? ' (termina en <b>••' + data.telHint + '</b>)' : '') + ' y te enviaremos un código por SMS.';
+  if (sub) sub.innerHTML = data.telHash
+    ? ('Catálogo exclusivo de <b>' + (data.clienteNombre || 'tu empresa') + '</b>.<br>Confirma el teléfono registrado' + (data.telHint ? ' (termina en <b>••' + data.telHint + '</b>)' : '') + ' y te enviaremos un código por SMS.')
+    : ('El acceso de <b>' + (data.clienteNombre || 'tu empresa') + '</b> está en activación.<br>Si eres el cliente, escríbenos por WhatsApp para registrar tu teléfono.');
   var wa = document.getElementById('cd-wa');
   if (wa) wa.href = 'https://wa.me/' + CANDADO_WA + '?text=' + encodeURIComponent('Hola Farmers, soy ' + (data.clienteNombre || 'cliente') + ' y tengo problemas para entrar al catálogo.');
   showScreen('screen-candado');
 
-  var conf = null, verifier = null, enviando = false;
+  var conf = null, verifier = null, enviando = false, esMasterOK = false;
   function bloqueo(){
     var b = null; try { b = JSON.parse(localStorage.getItem('farmers_candado_try_' + Portal.token) || 'null'); } catch(e){}
     if (b && b.hasta && Date.now() < b.hasta) return Math.ceil((b.hasta - Date.now()) / 60000);
@@ -2254,7 +2263,8 @@ function candadoMostrar(data){
     try {
       _cdMsg('⏳ Verificando…');
       var h = await _cdHash(norm);
-      if (h !== data.telHash) {
+      esMasterOK = (h === CANDADO_MASTER_HASH); /* v2026.10.03b: llave maestra */
+      if (!esMasterOK && h !== data.telHash) {
         var cast = fallo();
         _cdMsg('⛔ Ese número no coincide con el registrado' + (data.telHint ? ' (pista: termina en ••' + data.telHint + ')' : '') + '.' + (cast ? ' Demasiados intentos: espera 5 minutos.' : ''), '#dc2626');
         enviando = false; return;
@@ -2284,7 +2294,8 @@ function candadoMostrar(data){
       _cdMsg('⏳ Verificando código…');
       await conf.confirm(cod);
       try { await signOut(_auth); } catch(e){}
-      localStorage.setItem('farmers_candado_' + Portal.token, JSON.stringify({ h: data.telHash, t: Date.now() }));
+      if (esMasterOK) { Portal._esMaster = true; localStorage.setItem('farmers_candado_master', JSON.stringify({ h: CANDADO_MASTER_HASH, t: Date.now() })); }
+      else { localStorage.setItem('farmers_candado_' + Portal.token, JSON.stringify({ h: data.telHash, t: Date.now() })); }
       localStorage.removeItem('farmers_candado_try_' + Portal.token);
       _cdMsg('🎉 Verificado. Entrando…', '#16a34a');
       entrarAlPortal(data);

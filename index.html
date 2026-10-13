@@ -1153,9 +1153,15 @@ async function cargarImagenesProductos() {
   const PROG_NEW_END = 80;
   const PROG_END = 100;
 
-  setLoadProgress(PROG_START, 'Descargando imágenes (sistema principal)...');
-
-  // ── Sistema NUEVO: colección 'img' (1 doc por ref) ──
+  /* PORTAL v2026.10.13 — IMÁGENES BAJO DEMANDA (fix crash en teléfonos)
+     Antes se descargaban TODAS las fotos (≈900 × ~100 KB) al abrir el portal:
+     cientos de MB en memoria → el teléfono cerraba la página. Ahora cada foto
+     se pide a Firestore SOLO cuando su tarjeta se acerca a la pantalla
+     (portalImgCargar) y se guarda en un caché pequeño. */
+  Portal._imgLazy = true;
+  setLoadProgress(PROG_NEW_END, 'Imágenes: se cargan al ir viendo los productos');
+  if (Portal._imgLazy) { /* sistema nuevo img/{ref}: bajo demanda */ } else
+  // ── Sistema NUEVO (modo antiguo, desactivado): colección 'img' completa ──
   try {
     const snap = await getDocs(collection(db, 'img'));
     let loaded = 0;
@@ -1211,6 +1217,66 @@ function getImagenProducto(p) {
   const imgs = Portal.productImages || {};
   return imgs[p.r] || imgs[p.c] || imgs[p.b] || null;
 }
+
+// ═══ PORTAL v2026.10.13 — carga de fotos bajo demanda ═══
+Portal._imgCache = new Map();      // id → base64 (máx. 120, se van soltando las más viejas)
+Portal._imgNoExiste = new Set();   // ids consultados que no tienen foto
+Portal._imgPend = new Map();       // id → Promise en curso
+Portal._imgCola = []; Portal._imgActivas = 0;
+function _imgCacheSet(id, v) {
+  Portal._imgCache.set(id, v);
+  if (Portal._imgCache.size > 120) { const k = Portal._imgCache.keys().next().value; Portal._imgCache.delete(k); }
+}
+function _imgPedir(id) {
+  if (Portal._imgCache.has(id)) return Promise.resolve(Portal._imgCache.get(id));
+  if (Portal._imgNoExiste.has(id)) return Promise.resolve(null);
+  if (Portal._imgPend.has(id)) return Portal._imgPend.get(id);
+  const pr = new Promise(function(resolve){
+    Portal._imgCola.push(function(){
+      return getDoc(doc(db, 'img', String(id))).then(function(d){
+        const v = (d.exists() && d.data() && d.data().v) ? d.data().v : null;
+        if (v) _imgCacheSet(id, v); else Portal._imgNoExiste.add(id);
+        resolve(v);
+      }).catch(function(){ resolve(null); });
+    });
+    _imgBombear();
+  }).finally(function(){ Portal._imgPend.delete(id); });
+  Portal._imgPend.set(id, pr);
+  return pr;
+}
+function _imgBombear() {
+  while (Portal._imgActivas < 4 && Portal._imgCola.length) {
+    const job = Portal._imgCola.shift();
+    Portal._imgActivas++;
+    job().finally(function(){ Portal._imgActivas--; _imgBombear(); });
+  }
+}
+// Devuelve la foto del producto (busca por ref, código interno y código de barra)
+async function portalImgDe(ids) {
+  const legacy = Portal.productImages || {};
+  for (const id of ids) { if (id && legacy[id]) return legacy[id]; }
+  for (const id of ids) {
+    if (!id) continue;
+    const v = await _imgPedir(id);
+    if (v) return v;
+  }
+  return null;
+}
+async function portalImgCargar(w) {
+  if (!w || w.dataset.cargando === '1') return;
+  const im = w.querySelector('img'); if (!im || im.getAttribute('src')) return;
+  w.dataset.cargando = '1';
+  const ids = String(w.dataset.imgids || '').split('|').filter(Boolean);
+  const v = await portalImgDe(ids);
+  w.dataset.cargando = '';
+  if (v) {
+    im.src = v; im.style.display = '';
+    const ph = w.querySelector('.pc-img-ph'); if (ph) ph.style.display = 'none';
+  } else {
+    w.dataset.sinfoto = '1';
+  }
+}
+window.portalImgDe = portalImgDe;
 
 function disponibleProducto(ref) {
   // ⭐ Fuente única de verdad: snapshot del admin
@@ -1647,9 +1713,10 @@ function crearCardProducto(p) {
   const nuevoTag = (Portal.refsNuevas && Portal.refsNuevas.has(p.r))
     ? '<div style="position:absolute;top:8px;left:8px;background:#dc2626;color:#fff;font-size:.56rem;font-weight:900;padding:3px 8px;border-radius:999px;z-index:2;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.25);">NUEVO</div>'
     : ''; /* v2026.10.03 */
-  const imgHTML = img
-    ? '<div class="pc-image" style="position:relative;" data-imgsrc="' + img + '" data-ref="' + (p.r || '') + '">' + nuevoTag + '<img alt="' + (p.r || '') + '" decoding="async"></div>'
-    : '<div class="pc-image-placeholder" style="position:relative;">' + nuevoTag + '📦</div>';
+  const _ids1013 = [p.r, p.c, p.b].filter(function(x){ return x !== undefined && x !== null && String(x).trim() !== ''; }).map(function(x){ return String(x).trim().replace(/[|"<>]/g, ''); }).join('|');
+  const imgHTML = '<div class="pc-image" style="position:relative;" data-imgids="' + _ids1013 + '" data-ref="' + (p.r || '') + '">' + nuevoTag +
+      '<span class="pc-img-ph" style="font-size:2.4rem;color:#cbd5e1;">📦</span>' +
+      '<img alt="' + (p.r || '') + '" decoding="async" style="display:none;"></div>'; /* v2026.10.13: foto bajo demanda */
 
   const card = document.createElement('div');
   card.className = 'product-card' + (disp === 0 ? ' agotado' : '');
@@ -1724,8 +1791,12 @@ function crearCardProducto(p) {
 
   // ── Imagen: click para lightbox ──
   const imgDiv = card.querySelector('.pc-image');
-  if (imgDiv && img) {
-    imgDiv.addEventListener('click', () => abrirLightbox(img, p.r));
+  if (imgDiv) {
+    imgDiv.addEventListener('click', async () => {
+      const ids = String(imgDiv.dataset.imgids || '').split('|').filter(Boolean);
+      const src = img || await portalImgDe(ids);
+      if (src) abrirLightbox(src, p.r);
+    });
   }
 
   // ── Controles de cantidad ──
@@ -1789,9 +1860,7 @@ function portalObservarImagenes(scope) {
     var zona = scope || document;
     if (!('IntersectionObserver' in window)) {
       // Navegador sin observador (muy raro): cargar directo como antes
-      zona.querySelectorAll('.pc-image[data-imgsrc]').forEach(function(w){
-        var im = w.querySelector('img'); if (im && !im.getAttribute('src')) im.src = w.dataset.imgsrc || '';
-      });
+      zona.querySelectorAll('.pc-image[data-imgids]').forEach(function(w){ portalImgCargar(w); });
       return;
     }
     if (!Portal._imgObs) {
@@ -1799,15 +1868,15 @@ function portalObservarImagenes(scope) {
         entries.forEach(function(en){
           var w = en.target, im = w.querySelector('img'); if (!im) return;
           if (en.isIntersecting) {
-            if (!im.getAttribute('src')) im.src = w.dataset.imgsrc || '';
+            if (!im.getAttribute('src') && w.dataset.sinfoto !== '1') portalImgCargar(w);
           } else if (Math.abs(en.boundingClientRect.top) > (window.innerHeight * 5)) {
             // Muy lejos de la pantalla: soltar el bitmap para devolver memoria
-            if (im.getAttribute('src')) im.removeAttribute('src');
+            if (im.getAttribute('src')) { im.removeAttribute('src'); im.style.display = 'none'; var ph = w.querySelector('.pc-img-ph'); if (ph) ph.style.display = ''; }
           }
         });
       }, { rootMargin: '700px 0px 700px 0px' });
     }
-    zona.querySelectorAll('.pc-image[data-imgsrc]').forEach(function(w){ Portal._imgObs.observe(w); });
+    zona.querySelectorAll('.pc-image[data-imgids]').forEach(function(w){ Portal._imgObs.observe(w); });
   } catch (e) { console.warn('[PORTAL] lazy imgs:', e); }
 }
 

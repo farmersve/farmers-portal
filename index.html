@@ -991,7 +991,9 @@ async function cargarCatalogo() {
       const real = (invMap[p.r] !== undefined) ? (parseInt(invMap[p.r]) || 0) : (parseInt(p.ex) || 0);
       const comp = _adminGetCompQty(p.r);
       const disp = Math.max(0, real - comp);
-      const ord = parseInt((ptDataMap[p.r] || {}).exOrdenada || 0) || 0;
+      // v2026.10.15: sin el snapshot del sistema NO se sabe qué está apartado en preventas
+      // → por seguridad NO se muestra mercancía en camino (nunca enseñar lo reservado).
+      const ord = 0;
       snapBuilt[p.r] = { real, comprometido: comp, disponible: disp, ordenada: ord };
       if (disp === 0) agotado++;
       else if (disp <= 10) bajoStock++;
@@ -1368,9 +1370,10 @@ function getOrdenada(ref) {
   if (Portal.snapshot && Portal.snapshot[ref]) {
     return parseInt(Portal.snapshot[ref].ordenada) || 0;
   }
-  // Fallback legacy
-  if (!Portal.ordenada || !Portal.ordenada[ref]) return 0;
-  return parseInt(Portal.ordenada[ref].exOrdenada || 0) || 0;
+  // v2026.10.15: sin dato del snapshot → 0. La Ordenada cruda (pt_data) incluye lo
+  // apartado en PREVENTAS y nunca debe mostrarse al cliente. Solo vale la del
+  // snapshot que publica el sistema de pedidos (ordenada LIBRE = ordenada − preventas).
+  return 0;
 }
 
 function mostrarOrdenadaActiva() {
@@ -1503,10 +1506,14 @@ async function refrescarSnapshot(motivo) {
       const ahora = nuevo[p.r] ? (parseInt(nuevo[p.r].disponible) || 0) : 0;
       if (antes > 0 && ahora <= 0) desaparecidas.push(p.r);
     });
+    // v2026.10.15: si cambió la mercancía en camino LIBRE (p.ej. se apartó en una preventa), redibujar
+    const cambioOrd = Portal.productos.some(function(p){
+      return getOrdenada(p.r) !== (nuevo[p.r] ? (parseInt(nuevo[p.r].ordenada) || 0) : 0);
+    });
 
     Portal.snapshot = nuevo;
 
-    if (desaparecidas.length) {
+    if (desaparecidas.length || cambioOrd) {
       const cfg = (Portal.tokenData && Portal.tokenData.configVista) || {};
       Portal.productos = Portal.productos.filter(function(p){
         const disp = disponibleProducto(p.r);

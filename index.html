@@ -1637,6 +1637,10 @@ function renderProductos() {
 
 function crearCardProducto(p) {
   const disp = disponibleProducto(p.r);
+  // v2026.10.15b: con Ordenada habilitada, el cliente puede pedir lo disponible + lo que viene en camino (libre)
+  const ordLibre = mostrarOrdenadaActiva() ? getOrdenada(p.r) : 0;
+  const maxQ = disp + ordLibre;
+  const llegaTxt = (function(){ try { const l = Portal.snapshot && Portal.snapshot[p.r] && Portal.snapshot[p.r].llega; if (!l) return ''; const m = String(l).match(/(\d{4})-(\d{2})-(\d{2})/); return m ? ' · llega ~' + m[3] + '/' + m[2] : ''; } catch(e){ return ''; } })();
   const mostrarStockMode = Portal.tokenData.configVista?.mostrarStock || 'disponibilidad'; // oculto | disponibilidad | exacto
   const precio = getPrecio(p);
   const simb = simboloMoneda();
@@ -1726,7 +1730,7 @@ function crearCardProducto(p) {
       '<img alt="' + (p.r || '') + '" decoding="async" style="display:none;"></div>'; /* v2026.10.13: foto bajo demanda */
 
   const card = document.createElement('div');
-  card.className = 'product-card' + (disp === 0 ? ' agotado' : '');
+  card.className = 'product-card' + (maxQ === 0 ? ' agotado' : '');
   card.setAttribute('data-card-ref', p.r);
 
   // Escapar descripción mínima (proteger de XSS en datos del catálogo)
@@ -1786,14 +1790,15 @@ function crearCardProducto(p) {
 
       '<div class="pc-controls">' +
         '<div class="pc-qty-group">' +
-          '<button class="pc-qty-btn" data-action="dec" ' + (disp === 0 ? 'disabled' : '') + '>−</button>' +
-          '<input type="number" class="pc-qty-input" value="' + qtyCart + '" min="0" ' + (disp === 0 ? 'disabled' : '') + '>' +
-          '<button class="pc-qty-btn" data-action="inc" ' + (disp === 0 ? 'disabled' : '') + '>+</button>' +
+          '<button class="pc-qty-btn" data-action="dec" ' + (maxQ === 0 ? 'disabled' : '') + '>−</button>' +
+          '<input type="number" class="pc-qty-input" value="' + qtyCart + '" min="0" ' + (maxQ === 0 ? 'disabled' : '') + '>' +
+          '<button class="pc-qty-btn" data-action="inc" ' + (maxQ === 0 ? 'disabled' : '') + '>+</button>' +
         '</div>' +
-        '<button class="pc-add-btn ' + (qtyCart > 0 ? 'added' : '') + '" ' + (disp === 0 ? 'disabled' : '') + ' data-action="add">' +
-          (qtyCart > 0 ? '✓ ' + qtyCart + ' uds' : 'Agregar') +
+        '<button class="pc-add-btn ' + (qtyCart > 0 ? 'added' : '') + '" ' + (maxQ === 0 ? 'disabled' : '') + ' data-action="add">' +
+          (qtyCart > 0 ? '✓ ' + qtyCart + ' uds' + (qtyCart > disp ? ' (' + (qtyCart - Math.max(0, disp)) + ' en camino)' : '') : (disp === 0 && ordLibre > 0 ? 'Reservar' : 'Agregar')) +
         '</button>' +
       '</div>' +
+      (ordLibre > 0 ? '<div style="margin-top:6px;font-size:.66rem;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 7px;line-height:1.35;">📦 Puedes pedir hasta ' + maxQ + ': ' + disp + ' ahora + ' + ordLibre + ' en camino' + llegaTxt + '. Lo que viene en camino se te despacha al llegar.</div>' : '') +
     '</div>';
 
   // ── Imagen: click para lightbox ──
@@ -1820,15 +1825,15 @@ function crearCardProducto(p) {
     // ═══ FIX: antes decía "if (disp > 0 && v > disp)". Cuando disp era 0 la
     // condición NUNCA se cumplía y el cliente podía pedir sin límite algo
     // completamente comprometido. Causa real de la doble reserva de EXC420.
-    if (disp <= 0) {
+    if (maxQ <= 0) {
       alert('❌ ' + p.r + ' no tiene unidades disponibles.\n\nTodo el stock está comprometido en otros pedidos.');
       qtyInput.value = 0;
       return;
     }
     const v = (parseInt(qtyInput.value) || 0) + 1;
-    if (v > disp) {
-      alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r);
-      qtyInput.value = disp;
+    if (v > maxQ) {
+      alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r + (ordLibre > 0 ? ' + ' + ordLibre + ' en camino' : ''));
+      qtyInput.value = maxQ;
       return;
     }
     qtyInput.value = v;
@@ -1839,14 +1844,14 @@ function crearCardProducto(p) {
       delete Portal.carrito[p.r];
     } else {
       // ═══ FIX: misma condición defectuosa que en el botón +.
-      if (disp <= 0) {
+      if (maxQ <= 0) {
         alert('❌ ' + p.r + ' no tiene unidades disponibles.\n\nTodo el stock está comprometido en otros pedidos.');
         qtyInput.value = 0;
         return;
       }
-      if (q > disp) {
-        alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r);
-        qtyInput.value = disp;
+      if (q > maxQ) {
+        alert('Solo hay ' + disp + ' unidad(es) disponible(s) de ' + p.r + (ordLibre > 0 ? ' + ' + ordLibre + ' en camino' : ''));
+        qtyInput.value = maxQ;
         return;
       }
       Portal.carrito[p.r] = { producto: p, qty: q, precio: precio };
@@ -1947,7 +1952,7 @@ function abrirCarrito() {
           '<div class="ci-ref">' + i.producto.r + '</div>' +
           '<div class="ci-desc">' + i.producto.d + '</div>' +
           '<div class="ci-price-qty">' +
-            '<span>' + simb + i.precio.toFixed(2) + ' × ' + i.qty + '</span>' +
+            '<span>' + simb + i.precio.toFixed(2) + ' × ' + i.qty + (function(){ const ec = Math.max(0, i.qty - disponibleProducto(i.producto.r)); return ec > 0 ? ' <b style="color:#b45309;">(' + ec + ' en camino)</b>' : ''; })() + '</span>' +
             '<span class="ci-subtotal">' + simb + sub.toFixed(2) + '</span>' +
           '</div>' +
         '</div>' +
@@ -1999,7 +2004,7 @@ async function enviarPedido() {
       Object.values(Portal.carrito).forEach(function(it){
         const ref = it.producto.r;
         const s = snapFresco[ref];
-        const dispAhora = s ? (parseInt(s.disponible) || 0) : 0;
+        const dispAhora = s ? ((parseInt(s.disponible) || 0) + (mostrarOrdenadaActiva() ? (parseInt(s.ordenada) || 0) : 0)) : 0; // v2026.10.15b: + en camino libre
         if (it.qty > dispAhora) {
           conflictos.push({ ref: ref, desc: it.producto.d || ref, pedido: it.qty, disponible: dispAhora });
         }
@@ -2049,6 +2054,7 @@ async function enviarPedido() {
       ref: i.producto.r,
       desc: i.producto.d,
       qty: i.qty,
+      qtyEnCamino: Math.max(0, i.qty - disponibleProducto(i.producto.r)), // v2026.10.15b
       precioMostrado: i.precio,
       precioUSD: parseFloat(i.producto.u || 0),
       precioBCV: parseFloat(i.producto.bv || i.producto.u || 0),
@@ -2074,6 +2080,7 @@ async function enviarPedido() {
       fechaStr: new Date().toISOString(),
       estado: 'pendiente',
       sincronizadoAFarmers: false,
+      conEnCamino: items.some(function(x){ return x.qtyEnCamino > 0; }), // v2026.10.15b
     };
 
     const ref = await addDoc(collection(db, 'portal_pedidos'), pedido);

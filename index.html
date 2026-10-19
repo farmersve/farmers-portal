@@ -465,6 +465,102 @@
 /* El naranja conserva UN solo escenario estelar: la escasez honesta */
 .pc-stock-low { background: var(--f-orange); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(244,123,62,.4); }
 </style>
+<style id="fv-catalogo">
+/* ═══ PORTAL v2026.10.19 — misma identidad del catálogo PDF: blanco, texto negro, logos oficiales, sin naranja ═══ */
+:root { --f-orange:#9A65FE; --f-orange-deep:#7c4dff; --f-ink:#111111; --f-deep:#0A096A;
+        --f-action: linear-gradient(135deg, #0A096A 0%, #5b3fd6 100%); }
+.splash-container { background: radial-gradient(circle at 20% 18%, rgba(154,101,254,.38), transparent 46%), radial-gradient(circle at 82% 82%, rgba(124,77,255,.22), transparent 48%), linear-gradient(150deg, #08075c 0%, #100d80 55%, #1c148f 100%); }
+#screen-form.screen.active { background: radial-gradient(circle at 15% 12%, rgba(154,101,254,.30), transparent 42%), radial-gradient(circle at 88% 88%, rgba(124,77,255,.20), transparent 44%), linear-gradient(155deg, #08075c, #100d80 60%, #1c148f); }
+.ch-cart-btn, .cart-send-btn, .pc-add-btn, .bb-btn { background: var(--f-action); box-shadow: 0 6px 16px rgba(91,63,214,.35); }
+.ch-cart-badge { color: var(--f-deep); }
+.pc-add-btn.added { background: linear-gradient(135deg, #16a34a, #0a8a5a); }
+.form-divider, .lp-fill { background: linear-gradient(90deg, #0A096A, #9A65FE); }
+.lp-status .lp-dot { background: #9A65FE; } .spinner { border-top-color: #c4b5fd; }
+
+/* Encabezado fijo: logo Farmers en blanco sobre azul */
+.catalog-header { background: linear-gradient(120deg, #08075c, #100d80); }
+.ch-logo-svg { height: 30px; width: 111px; display: block; flex-shrink: 0; }
+
+/* Bienvenida con la cara de la portada */
+.welcome-banner.wb2 { background: radial-gradient(115% 140% at 92% 0%, #2c1fa3 0%, #100d80 40%, #08075c 80%); border-bottom: none; padding-block: 26px 24px; }
+.welcome-banner.wb2::after { display: none; }
+.wb2-emb { position: absolute; right: -36px; top: -28px; height: 190px; width: 169px; pointer-events: none; z-index: 1; }
+.wb2-in { position: relative; z-index: 2; max-width: 72%; }
+.wb2-kick { font-size: .62rem; font-weight: 800; letter-spacing: 3.5px; text-transform: uppercase; color: #c4b5fd; margin: 0 0 6px; }
+.wb2-title { font-family: var(--f-display); font-weight: 900; font-size: 2.35rem; line-height: .92; letter-spacing: 1px; text-transform: uppercase; margin: 0 0 9px; color: #fff; }
+.wb2-title em { font-style: normal; color: #c4b5fd; }
+.wb2-sub { font-size: .76rem; color: rgba(255,255,255,.82); margin: 0 0 10px; font-weight: 600; letter-spacing: .3px; }
+.wb2-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.wb2-meta b { color: #fff; }
+.wb2-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.4); }
+@media (max-width: 600px) { .wb2-kick { font-size: .54rem; letter-spacing: 2px; } .ch-title { font-size: .82rem; letter-spacing: .8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .wb2-title { font-size: 1.8rem; } .wb2-emb { height: 150px; width: 133px; right: -52px; top: -20px; opacity: .55; } .wb2-in { max-width: 100%; } }
+
+/* Marcas con su logo oficial */
+.filter-pill.has-logo { background: #fff; border: 1.5px solid var(--f-border); padding: 5px 14px; height: 42px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.filter-pill.has-logo img { height: 28px; max-width: 112px; width: auto; object-fit: contain; display: block; }
+.filter-pill.has-logo.active { background: #fff; border-color: #0A096A; box-shadow: 0 0 0 1.5px #0A096A inset, 0 4px 12px rgba(10,9,106,.18); }
+.filter-pill { color: var(--f-ink); }
+.filter-pill.active:not(.has-logo) { background: #0A096A; }
+
+/* Etiquetas de disponibilidad (iguales al catálogo) */
+.stock-pill { color: var(--f-ink); }
+.stock-pill .sp-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.stock-pill.active { background: #0A096A !important; border-color: #0A096A !important; color: #fff !important; box-shadow: 0 3px 10px rgba(10,9,106,.28) !important; }
+.results-counter { color: var(--f-ink); }
+
+/* Presentación de la marca + categorías */
+#brand-intro { display: none; }
+#brand-intro.on { display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 22px; align-items: start; margin: 16px var(--f-gutter) 0; background: #fff; border: 1px solid #e4e7ed; border-radius: 16px; padding: 18px; color: var(--f-ink); }
+.bi-logo { height: 116px; border: 1px solid #e9ebf0; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 14px 18px; background: #fff; }
+.bi-logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+.bi-logo-txt { font-family: var(--f-display); font-weight: 900; font-size: 2rem; letter-spacing: 3px; color: var(--f-ink); }
+.bi-kick, .bi-h { font-size: .6rem; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 6px; color: var(--f-ink); }
+.bi-desc { font-size: .86rem; line-height: 1.55; font-weight: 500; margin: 0 0 14px; text-transform: none; color: var(--f-ink); }
+.bi-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.bi-cat { background: #f4f5f7; border: 1.5px solid transparent; border-radius: 999px; padding: 6px 12px; font-size: .66rem; font-weight: 800; color: var(--f-ink); letter-spacing: .5px; display: inline-flex; gap: 6px; align-items: center; text-transform: uppercase; white-space: nowrap; }
+.bi-cat b { font-family: var(--f-display); font-size: .82rem; opacity: .55; }
+.bi-cat.on { background: #0A096A; color: #fff; }
+.bi-cat.on b { opacity: .85; }
+#brand-intro.on > * { min-width: 0; }
+.bi-cat.bi-mas { background: #fff; border-color: #0A096A; color: #0A096A; }
+@media (max-width: 700px) { #brand-intro.on { grid-template-columns: minmax(0,1fr); gap: 12px; padding: 14px; } .bi-logo { height: 84px; } .bi-cats { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; } }
+
+/* Tarjeta de producto = ficha del catálogo */
+.product-card.pc2 { border-radius: 14px; box-shadow: 0 1px 3px rgba(20,25,60,.06); border: 1px solid #e4e7ed; }
+.pc2-media { position: relative; border-bottom: 1px solid #eef0f4; }
+.pc2 .pc-image { width: 100%; height: 200px; background: #fff; }
+.pc2 .pc-image::after { display: none; }
+.pc2 .pc-image img { object-fit: contain; padding: 12px; }
+.pc2-brand { position: absolute; top: 10px; right: 10px; height: 32px; max-width: 48%; background: #fff; border: 1px solid #e9ebf0; border-radius: 8px; padding: 4px 8px; display: flex; align-items: center; z-index: 2; }
+.pc2-brand img { height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block; }
+.pc2-brand-txt { font-family: var(--f-display); font-weight: 900; font-size: .8rem; letter-spacing: 1.5px; color: var(--f-ink); }
+.pc2-main { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; color: var(--f-ink); }
+.pc2-row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pc2-ref { font-family: var(--f-display); font-weight: 900; font-size: 1.65rem; line-height: 1; color: var(--f-ink); letter-spacing: .5px; }
+.pc2-pills { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.pc2-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px 4px 7px; border-radius: 999px; font-size: .58rem; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--f-ink); white-space: nowrap; }
+.pc2-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+.pc2-ok { background: #ecfdf3; } .pc2-ok::before { background: #16a34a; }
+.pc2-low { background: #fefce8; } .pc2-low::before { background: #ca8a04; }
+.pc2-way { background: #eef2ff; } .pc2-way::before { background: #4f46e5; }
+.pc2-desc { margin-top: 7px; font-size: .8rem; font-weight: 700; line-height: 1.3; color: var(--f-ink); min-height: 2.6em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc2-hist { margin-top: 6px; }
+.pc2 .pc-historial-badge { background: #f3f4f6; color: var(--f-ink); border: 1px solid #e5e7eb; }
+.pc2 .pc-historial-badge .pc-historial-fecha { color: var(--f-ink); }
+.pc2-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eef0f4; }
+.pc2-ml { font-size: .54rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--f-ink); }
+.pc2-mv { font-size: .8rem; font-weight: 700; color: var(--f-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc2-price { display: flex; align-items: baseline; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eef0f4; }
+.pc2-price-lbl { font-size: .6rem; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; color: var(--f-ink); }
+.pc2-price-val { font-family: var(--f-display); font-weight: 900; font-size: 2.15rem; line-height: 1; color: var(--f-ink); }
+.pc2 .pc-controls { margin-top: 12px; }
+.pc2 .pc-qty-btn { color: var(--f-ink); }
+.pc2-note { margin-top: 8px; font-size: .66rem; font-weight: 700; color: var(--f-ink); background: #f4f5f7; border: 1px solid #e6e8ee; border-radius: 8px; padding: 6px 8px; line-height: 1.4; }
+
+/* Pie con datos de contacto */
+.pf-foot { margin: 8px var(--f-gutter) 0; padding: 16px 0 6px; border-top: 1px solid #dfe3ea; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; font-size: .62rem; font-weight: 700; letter-spacing: .6px; color: var(--f-ink); }
+.pf-foot b { letter-spacing: 1.5px; }
+</style>
 </head>
 <body>
 
@@ -559,9 +655,10 @@
 <!-- ══════════ PANTALLA 3: CATÁLOGO ══════════ -->
 <div id="screen-catalog" class="screen">
   <div class="catalog-header">
-    <img id="header-logo" class="ch-logo" alt="Farmers">
+    <img id="header-logo" class="ch-logo" alt="Farmers" style="display:none;">
+    <span id="ch-logo-slot"></span>
     <div class="ch-info">
-      <p class="ch-title">Catálogo Farmers C.A.</p>
+      <p class="ch-title">Portal de pedidos</p>
       <p class="ch-client" id="header-client-name"></p>
     </div>
     <button class="ch-cart-btn" id="header-cart-btn">
@@ -572,25 +669,14 @@
   <!-- ═══ PORTAL VENDE-SOLO v2026.10.03: pedidos recientes · frecuentes ═══ -->
   <div id="pv-zona" style="display:none;padding:12px 14px 2px;"></div>
 
-  <!-- ── Banner corporativo mayorista ── -->
-  <div class="welcome-banner">
-    <div class="wb-content">
-      <div class="wb-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-      </div>
-      <div class="wb-text">
-        <p class="wb-eyebrow">Distribución Mayorista</p>
-        <h2 class="wb-title" id="wb-title">CATÁLOGO FARMERS C.A.</h2>
-        <p class="wb-subtitle" id="wb-subtitle">Acceso exclusivo para clientes autorizados</p>
-      </div>
-      <div class="wb-meta">
-        <div class="wb-meta-lbl">Cliente</div>
-        <div class="wb-meta-val" id="wb-client-code">—</div>
-      </div>
+  <!-- ── Bienvenida con la cara de la portada del catálogo (v2026.10.19) ── -->
+  <div class="welcome-banner wb2">
+    <span id="wb2-emb-slot"></span>
+    <div class="wb2-in">
+      <p class="wb2-kick">Importación y distribución al mayor</p>
+      <h2 class="wb2-title" id="wb-title">Catálogo <em>de productos</em></h2>
+      <p class="wb2-sub" id="wb-subtitle">Acceso exclusivo para clientes autorizados</p>
+      <div class="wb2-meta"><span id="wb-edicion">Edición</span><span class="wb2-dot"></span><span><b id="wb-client-code">—</b></span></div>
     </div>
   </div>
 
@@ -603,12 +689,13 @@
   </div>
 
   <div class="stock-filters" id="stock-filters">
-    <button class="stock-pill active" data-stock="ALL">✓ Todos</button>
-    <button class="stock-pill in" data-stock="IN">✓ Con stock</button>
-    <button class="stock-pill low" data-stock="LOW">⚠ Bajo stock</button>
-    <button class="stock-pill out" data-stock="OUT">✗ Agotados</button>
-    <button class="stock-pill ord" data-stock="ORD" id="pill-ord" style="display:none;">📦 Con Ordenada</button>
+    <button class="stock-pill active" data-stock="ALL">Todos</button>
+    <button class="stock-pill in" data-stock="IN"><span class="sp-dot" style="background:#16a34a;"></span>Disponible</button>
+    <button class="stock-pill low" data-stock="LOW"><span class="sp-dot" style="background:#ca8a04;"></span>Pocas unidades</button>
+    <button class="stock-pill ord" data-stock="ORD" id="pill-ord" style="display:none;"><span class="sp-dot" style="background:#4f46e5;"></span>En camino</button>
   </div>
+
+  <div id="brand-intro"></div>
 
   <div class="results-counter" id="results-counter"></div>
 
@@ -617,6 +704,8 @@
   <div id="no-products" style="text-align:center;padding:40px 20px;color:var(--f-text-muted);display:none;">
     <p style="font-size:0.9rem;">No hay productos que coincidan con tu búsqueda.</p>
   </div>
+
+  <div class="pf-foot" id="pf-foot"></div>
 
   <div class="img-progress" id="img-progress"></div>
 </div>
@@ -714,6 +803,37 @@ const BRAND_COLORS = {
 };
 function getBrandColor(br) {
   return BRAND_COLORS[String(br || '').toUpperCase()] || '#475569';
+}
+
+// ═══ v2026.10.19 — mismo lenguaje del catálogo PDF ═══
+const FARMERS_LOGO_PATHS = {"o": "M10.33,95.31L10.06,95.12L9.86,94.56L9.63,92.25L9.69,72.26L9.99,63.93L11.28,53.97L12.29,49.35L14.00,44.56L15.94,40.13L18.32,36.13L21.11,32.04L23.14,30.08L24.47,28.53L28.83,24.77L32.36,22.29L37.76,19.20L40.44,17.87L43.10,16.66L47.00,15.18L51.05,13.99L55.97,12.91L65.80,11.24L73.25,10.44L78.53,10.09L84.38,9.94L173.75,9.94L178.58,10.20L181.35,10.55L182.06,10.77L182.51,11.26L182.66,12.08L182.50,13.44L180.06,22.74L177.42,29.23L174.72,34.03L170.40,40.46L166.51,44.95L164.37,46.68L159.32,50.01L151.28,53.59L148.69,54.38L145.11,55.18L142.91,55.85L134.61,57.55L126.92,58.60L122.37,58.80L105.23,58.89L101.87,59.06L85.01,59.08L65.82,60.01L57.28,61.09L55.04,61.72L48.51,62.95L44.65,64.09L40.28,65.47L36.03,67.47L29.63,71.19L24.33,75.39L21.76,78.20L19.90,79.97L17.96,82.90L15.79,85.73L14.84,87.27L11.25,94.43L10.81,95.06L10.38,95.31Z", "p": "M12.15,215.89L10.97,215.70L10.11,215.08L9.72,214.10L9.59,212.49L9.59,171.25L9.82,165.37L10.01,148.24L9.92,140.64L9.73,137.25L9.82,121.38L10.32,112.64L11.35,107.03L12.27,103.84L14.32,98.63L16.28,94.97L18.64,91.46L20.78,88.84L24.51,85.07L28.54,81.97L32.65,79.46L36.08,77.77L39.92,76.23L44.23,75.04L48.82,74.13L59.05,73.11L87.88,72.19L104.87,72.19L114.13,72.44L139.24,72.32L140.96,72.48L141.89,72.92L142.22,73.34L142.44,73.99L142.45,75.89L142.05,78.36L140.72,83.66L137.69,92.25L135.70,96.51L133.13,100.81L131.67,102.74L129.99,104.56L126.63,107.56L124.27,109.33L121.99,110.68L117.27,112.58L112.98,113.92L104.33,115.39L97.23,115.91L76.27,116.33L64.91,116.72L61.97,116.98L61.19,117.52L60.83,118.65L60.54,125.74L60.19,127.79L60.02,127.14L59.96,124.87L60.13,118.53L59.91,117.53L59.38,116.99L58.09,116.81L54.76,117.07L48.70,118.01L43.05,119.12L37.09,120.90L30.41,124.22L28.26,125.57L24.95,128.01L20.29,132.73L19.16,134.10L16.40,138.21L14.64,141.20L11.62,148.18L10.98,150.17L10.69,152.01L10.43,155.89L10.41,165.74L10.17,171.25L10.31,178.88L10.17,212.74L10.34,214.21L10.83,214.98L11.70,215.31L13.61,215.29L13.18,215.65L12.24,215.89Z", "n": "M12.26,216.56L11.04,216.38L10.02,215.67L9.26,214.68L8.97,213.34L9.06,178.25L8.95,170.88L9.18,165.74L9.21,155.65L9.56,151.12L9.86,149.68L10.54,147.72L13.31,141.37L15.05,138.36L17.76,134.32L19.63,132.07L24.88,126.81L28.41,124.22L31.21,122.52L37.09,119.65L42.54,117.98L48.59,116.78L54.87,115.81L58.32,115.55L59.69,115.77L60.41,116.28L60.96,116.97L61.25,117.68L61.37,118.64L61.07,130.63L61.06,150.62L60.86,158.05L59.95,166.27L57.84,175.78L56.70,179.64L53.80,186.86L51.90,190.59L49.91,193.73L46.15,198.71L40.80,204.24L36.17,207.98L33.91,209.47L29.85,211.79L26.57,213.26L24.34,214.02L21.03,214.85L16.43,215.86L12.36,216.55Z", "t": "M777.8,215.6L767.2,215.7L763.2,214.9L760.2,214.7L758.8,214.2L755.8,213.6L749.4,211.8L746.7,210.8L745.4,210.1L744.4,209.8L743.4,209.2L740.0,207.8L737.8,206.7L736.6,205.9L735.4,205.4L729.6,201.6L728.5,200.6L728.3,200.0L728.4,199.4L730.1,195.8L730.8,194.6L731.3,193.4L732.0,192.2L733.1,189.8L735.7,184.8L736.3,183.2L737.6,180.8L739.2,177.4L739.9,176.2L741.6,172.8L742.0,172.3L742.4,172.3L742.7,172.4L746.4,175.7L747.4,176.3L750.2,178.6L757.0,182.7L759.6,183.8L761.0,184.2L762.4,184.8L764.6,185.2L766.8,185.9L771.6,185.9L772.6,186.0L775.2,185.9L776.6,185.2L777.8,184.9L780.0,184.0L782.2,182.8L784.2,181.1L785.6,179.2L786.9,176.4L787.5,172.8L787.0,169.0L785.8,166.8L785.1,165.8L783.8,164.3L782.2,163.0L779.0,161.1L777.8,160.6L776.6,159.9L771.6,158.0L767.2,156.8L765.2,156.0L763.0,155.5L761.8,154.9L760.2,154.4L754.2,152.0L751.0,150.5L746.2,147.8L744.4,146.6L741.0,144.1L740.2,143.2L739.4,142.7L738.7,141.4L737.9,140.4L737.2,138.9L736.3,137.4L735.1,134.6L734.2,131.4L733.5,127.6L733.1,123.2L732.9,118.2L733.1,117.0L733.1,114.0L733.3,111.4L734.2,106.0L735.2,102.0L738.2,94.7L739.2,93.0L742.0,88.8L743.0,87.4L745.8,84.7L747.2,83.1L750.4,80.6L751.4,80.0L752.2,79.2L754.4,78.0L760.2,75.3L763.2,74.2L766.6,73.3L772.4,72.7L783.0,72.7L787.6,73.3L791.0,74.1L792.4,74.2L793.8,74.8L795.8,75.2L800.4,76.8L802.8,77.3L805.2,78.2L806.4,78.8L807.6,79.1L809.6,80.2L811.6,81.0L813.4,81.9L815.4,83.0L815.8,83.4L815.9,84.2L815.6,85.2L814.2,87.6L812.5,91.6L810.8,95.0L808.1,101.0L807.6,102.4L807.0,103.2L806.0,105.2L803.8,110.2L803.4,110.7L803.0,110.8L802.4,110.6L801.4,109.6L800.4,109.0L798.2,107.4L793.8,105.1L792.4,104.7L791.4,104.0L788.2,103.0L787.0,102.7L783.4,102.3L780.2,102.3L776.4,102.9L775.4,103.5L774.4,103.8L773.6,104.4L772.2,105.2L770.1,106.8L768.0,109.2L767.8,110.3L767.1,112.0L766.9,114.4L767.2,116.0L768.0,118.2L768.3,118.8L769.4,120.1L771.6,122.1L774.2,123.8L776.0,124.7L781.0,126.8L789.6,129.2L792.8,130.3L793.8,130.8L799.4,133.0L803.4,135.2L806.4,137.2L807.8,138.0L809.0,139.1L811.9,141.2L815.8,145.4L817.4,148.0L818.5,150.4L820.7,156.2L820.9,158.6L821.3,159.6L821.3,161.6L821.5,162.8L821.5,172.0L821.3,174.6L820.9,175.8L820.6,179.6L820.0,181.4L819.6,183.6L819.0,185.2L818.5,187.6L817.9,188.8L817.5,190.4L815.5,194.4L814.6,195.6L812.9,198.4L811.5,200.0L807.6,203.9L804.2,206.6L802.4,207.8L800.2,209.0L799.4,209.6L795.4,211.4L792.6,212.4L790.6,212.8L789.0,213.5L787.0,213.8L783.2,214.9L781.4,214.9L777.8,215.6ZM237.2,212.3L204.2,212.3L203.0,212.0L202.5,211.6L202.2,211.0L201.8,209.4L201.2,208.0L200.8,206.4L199.8,203.8L199.1,202.4L197.8,198.0L195.0,190.6L194.8,189.6L194.2,189.0L192.6,188.7L190.6,188.9L184.8,188.9L183.2,188.7L152.2,188.7L150.8,188.9L149.4,188.8L148.8,189.2L148.6,190.4L147.9,191.4L147.6,192.6L147.1,193.6L145.9,197.0L145.6,198.4L145.1,199.2L144.7,200.6L144.0,202.2L143.6,203.4L142.8,205.0L142.6,206.2L141.9,207.4L140.7,211.4L140.2,212.0L138.0,212.3L106.8,212.3L106.2,212.3L105.8,212.0L105.7,211.4L106.3,209.4L107.0,208.0L109.2,201.4L109.8,200.0L112.7,192.2L113.2,190.2L114.1,187.6L114.8,186.2L118.4,176.0L119.8,172.4L120.3,170.6L121.2,168.6L121.4,167.4L121.9,166.2L122.2,165.0L124.6,159.0L126.2,154.0L126.8,152.6L127.2,151.2L127.7,150.4L129.7,144.8L130.2,142.8L131.2,140.0L132.8,136.2L133.2,134.6L133.8,133.2L134.2,131.6L135.1,129.2L135.8,127.8L136.3,126.0L136.9,124.6L139.4,117.2L141.6,111.6L143.1,107.0L143.8,105.4L144.2,103.6L144.9,102.6L146.3,98.2L147.0,96.6L147.2,95.4L150.0,88.4L152.2,81.6L152.8,80.4L153.8,77.6L154.4,77.0L155.0,76.7L155.6,76.7L183.2,76.7L184.4,76.8L188.2,76.7L189.8,77.0L190.4,77.4L192.8,84.6L193.3,86.4L194.6,89.4L195.0,90.8L195.6,92.0L197.1,97.0L199.0,102.2L199.7,103.4L200.0,104.9L200.6,106.4L202.1,111.2L203.6,114.8L205.3,120.2L207.6,126.2L208.0,127.8L208.7,129.2L209.0,130.6L209.6,132.0L210.0,133.8L212.7,140.6L213.0,142.0L213.6,143.2L213.8,144.2L214.5,146.0L215.0,147.8L215.6,149.2L216.0,150.6L216.6,151.8L217.8,155.8L219.2,159.8L220.6,163.0L221.1,164.8L221.6,165.8L222.9,170.4L225.6,177.4L228.0,184.8L229.4,188.2L230.4,191.0L230.8,192.8L231.4,194.4L232.0,196.4L233.4,199.6L235.6,206.0L236.0,207.6L237.4,211.2L237.5,211.8L237.2,212.3ZM352.2,212.3L314.6,212.3L312.8,212.3L312.2,212.1L307.8,204.8L307.2,204.0L306.7,203.0L301.2,193.8L298.8,189.6L296.3,185.6L295.4,183.8L291.4,177.4L289.2,173.4L288.4,172.4L285.8,167.6L284.0,164.8L281.9,161.0L281.4,160.6L281.0,161.0L280.7,162.4L280.9,165.0L280.9,170.4L280.7,171.6L280.9,173.0L280.8,174.4L280.9,175.6L280.9,206.0L280.7,207.2L280.9,208.4L280.7,209.6L280.9,210.8L280.7,211.8L280.2,212.2L279.4,212.3L249.4,212.3L248.8,212.3L248.3,212.0L248.0,211.0L248.1,209.4L248.1,79.2L248.0,77.8L248.4,76.9L249.0,76.7L250.6,76.7L300.6,76.7L307.2,77.3L310.4,78.1L311.4,78.1L312.6,78.6L314.8,79.2L316.0,79.8L319.8,81.3L323.0,82.9L329.4,87.1L331.1,88.6L334.3,92.4L335.8,94.6L338.4,100.4L339.0,102.4L339.6,104.0L340.7,109.0L341.1,114.2L341.1,121.2L340.5,127.4L339.6,130.9L337.6,136.4L335.8,140.2L335.0,141.4L334.4,142.6L331.6,146.6L327.6,150.5L325.6,151.8L320.0,154.7L318.6,155.1L317.2,155.8L315.8,156.0L315.0,156.3L314.3,156.8L314.1,157.4L314.4,158.0L315.5,159.2L316.0,160.2L319.4,164.8L320.0,165.8L323.6,170.8L324.4,171.8L328.0,177.0L329.4,178.8L331.0,181.2L333.6,184.8L334.2,185.8L335.6,187.6L338.4,191.6L339.4,192.8L341.2,195.6L342.2,196.8L345.6,201.8L348.9,206.0L350.4,208.6L352.4,211.2L352.6,211.8L352.2,212.3ZM512.4,212.3L481.8,212.3L481.0,212.1L480.5,211.6L480.1,209.4L479.9,205.4L479.1,201.8L478.9,197.6L478.3,193.2L478.3,191.8L477.9,189.8L477.9,188.0L476.9,181.6L476.9,179.4L476.3,176.8L475.9,171.6L474.9,166.2L474.9,164.0L474.3,160.8L473.9,154.6L473.1,149.2L472.9,145.6L472.7,144.0L472.1,141.6L471.9,137.4L471.5,135.8L471.2,135.3L470.8,135.1L470.2,135.4L469.9,135.8L469.3,138.2L467.7,142.6L467.0,143.8L463.6,153.0L461.0,159.2L460.6,160.6L459.6,163.2L457.8,167.4L454.7,176.0L453.3,179.0L452.0,182.2L450.6,186.4L449.9,187.8L446.6,196.6L443.0,205.4L442.5,207.4L440.5,211.8L440.2,212.2L439.4,212.3L428.2,212.3L427.6,212.1L427.1,211.4L425.2,206.6L424.9,205.4L424.2,204.2L421.8,197.2L420.0,193.0L419.2,190.4L416.8,183.8L416.0,182.4L415.8,181.4L412.9,173.2L411.2,169.4L408.8,162.2L407.2,158.4L405.8,154.2L403.9,149.2L403.2,147.8L402.7,146.0L402.2,145.0L401.8,143.6L401.2,142.2L400.9,140.8L400.4,139.8L399.9,138.2L399.2,136.8L398.8,135.4L398.6,135.2L398.2,135.0L397.9,135.2L397.6,135.6L397.1,137.0L397.1,138.8L396.7,141.0L396.7,142.6L395.7,148.6L395.7,150.6L394.9,154.4L394.5,158.6L393.9,161.0L393.7,164.2L393.1,167.0L393.1,168.4L391.7,178.4L391.7,180.0L390.9,184.0L390.7,187.8L389.9,191.0L389.7,193.8L388.9,197.8L388.7,201.0L388.1,204.6L388.1,206.0L387.7,207.4L387.7,209.8L387.4,211.6L386.8,212.1L385.8,212.3L356.0,212.3L355.4,212.3L355.0,212.0L354.8,211.4L355.1,207.4L355.9,203.8L356.3,199.6L356.9,198.2L357.1,195.2L357.9,192.4L358.1,189.0L359.9,178.8L360.1,175.2L360.9,172.4L361.1,169.6L361.9,166.6L362.1,164.2L362.9,160.4L363.1,157.8L364.1,152.2L364.1,150.4L364.9,147.0L365.1,143.8L365.7,142.4L366.1,138.6L366.9,135.4L366.9,133.8L367.7,129.8L368.1,125.4L368.9,121.8L368.9,119.8L369.9,116.0L370.1,113.6L370.9,110.2L371.1,107.2L372.1,101.8L372.3,98.8L372.9,96.6L373.1,93.2L374.1,89.4L374.1,87.6L374.7,86.0L375.1,82.2L375.7,79.8L375.9,77.4L376.2,77.0L376.8,76.7L378.0,76.9L379.6,76.7L407.0,76.7L407.8,76.8L408.5,77.2L409.4,79.4L409.7,80.6L410.6,82.8L411.0,84.2L412.4,87.6L414.9,95.4L416.6,99.6L419.0,107.0L419.6,108.2L420.1,109.8L420.7,111.0L421.0,112.2L421.6,113.6L422.9,118.2L423.5,119.2L424.0,120.8L424.6,122.0L426.8,128.8L427.5,130.4L428.0,132.2L428.6,133.6L430.3,138.2L432.0,143.6L433.4,147.0L434.0,148.1L434.4,148.4L434.8,148.2L435.0,147.8L435.4,146.4L437.1,141.4L437.8,140.1L438.8,137.4L441.4,130.0L442.0,128.6L442.2,127.8L442.8,126.6L445.0,120.8L445.2,119.6L445.8,118.6L446.7,116.4L447.2,114.8L447.9,113.2L449.2,109.0L450.2,106.4L451.0,104.8L452.6,100.6L454.0,96.8L454.2,95.6L454.8,94.6L455.1,93.6L455.8,92.2L458.2,85.2L461.4,77.2L462.2,76.8L463.0,76.7L492.8,76.7L494.0,77.0L494.3,77.4L494.5,78.2L494.9,82.6L495.9,88.2L495.9,89.8L496.7,93.0L496.9,96.4L497.7,99.4L497.9,102.8L498.9,109.2L499.1,112.4L499.7,115.0L499.9,118.2L500.7,121.6L501.1,126.0L501.7,127.6L501.9,131.0L502.7,135.4L502.9,139.0L503.7,143.4L503.9,146.4L504.5,149.0L504.9,153.2L505.7,156.2L505.9,159.6L506.7,163.4L506.7,166.2L507.1,167.6L507.1,168.8L507.9,173.2L508.1,176.4L508.7,179.0L508.9,182.0L509.5,183.8L509.9,188.0L510.7,191.4L510.9,195.2L511.7,199.4L511.9,203.0L513.2,211.2L513.0,211.8L512.4,212.3ZM598.8,212.2L528.8,212.3L528.0,212.2L527.4,211.8L527.1,210.6L527.3,209.2L527.3,200.2L527.1,197.8L527.1,177.0L527.3,175.4L527.1,173.8L527.1,81.4L527.3,80.0L527.1,78.6L527.3,77.4L527.8,76.8L528.8,76.7L594.8,76.7L596.4,76.9L597.6,76.7L599.0,76.9L599.4,77.2L599.5,77.8L599.5,104.8L599.5,105.4L599.2,105.8L598.8,106.1L597.8,106.2L566.6,106.1L565.2,106.3L564.2,106.1L561.4,106.1L560.6,106.3L560.2,106.6L559.9,107.2L559.9,107.8L559.9,127.8L560.0,128.4L560.4,128.9L561.6,129.1L596.0,129.1L596.6,129.2L597.0,129.6L597.3,131.0L597.1,132.6L597.3,135.6L597.3,137.8L597.1,139.2L597.1,155.0L597.3,157.8L597.2,158.4L596.8,158.7L595.8,158.9L594.6,158.7L593.2,158.9L591.8,158.7L568.4,158.7L567.2,158.8L566.2,158.7L562.0,158.7L560.4,159.0L560.0,159.4L559.9,160.0L559.9,181.2L560.0,181.8L560.3,182.2L560.8,182.5L561.4,182.7L598.2,182.7L598.8,182.7L599.2,183.0L599.5,183.4L599.5,184.0L599.5,207.8L599.3,209.4L599.5,211.2L599.4,211.8L598.8,212.2ZM723.6,212.3L685.0,212.3L684.4,212.3L683.8,212.0L682.4,209.8L681.0,207.2L680.2,206.4L679.8,205.4L678.6,203.6L677.7,201.8L676.0,199.0L675.4,198.2L674.8,197.0L667.8,185.2L666.4,183.0L664.6,179.8L662.2,176.0L660.8,173.4L658.2,169.4L657.6,168.2L654.0,162.0L653.5,161.2L653.0,161.0L652.4,161.4L652.1,162.6L652.3,164.2L652.3,210.6L652.3,211.2L652.0,211.8L651.4,212.2L650.2,212.3L620.8,212.3L620.2,212.2L619.7,211.8L619.5,211.4L619.5,210.6L619.5,78.4L619.5,77.6L620.0,77.0L620.6,76.7L622.4,76.7L671.6,76.7L679.8,77.5L683.4,78.2L684.8,78.8L686.8,79.4L689.2,80.3L695.2,83.1L701.2,87.3L703.7,89.8L705.4,91.8L707.6,95.2L708.1,96.4L708.7,97.4L710.6,101.8L711.7,106.2L712.5,111.6L712.7,114.0L712.7,122.2L712.1,125.0L711.9,127.6L710.8,132.0L709.6,135.6L706.2,142.4L703.6,146.0L702.7,146.8L702.0,147.8L699.0,150.5L695.6,152.8L691.8,154.6L689.0,155.7L687.6,156.0L686.6,156.4L686.0,156.8L685.8,157.4L686.2,158.4L689.0,162.0L690.0,163.6L697.6,174.0L703.0,181.8L705.5,185.0L708.0,188.8L710.1,191.4L710.5,192.4L711.4,193.4L712.0,194.4L715.6,199.4L717.2,201.8L719.2,204.4L721.0,207.0L723.8,210.8L724.1,211.4L724.1,211.8L723.6,212.3ZM288.9,137.2L292.4,136.6L295.6,135.8L296.4,135.4L297.8,135.0L301.6,133.0L303.6,131.4L304.6,130.0L305.7,128.0L306.9,124.2L307.3,119.6L306.9,115.8L306.2,114.2L305.7,112.6L305.0,111.1L304.3,110.2L303.9,109.2L302.2,107.7L299.2,106.0L293.6,104.0L289.4,103.1L287.0,102.9L281.6,102.9L281.0,103.4L280.7,104.4L280.9,105.8L280.9,108.2L280.7,109.4L280.9,110.8L280.9,136.2L281.4,136.8L282.0,137.1L287.0,137.1L288.2,137.3L288.9,137.2ZM659.3,137.2L664.0,136.6L666.6,136.0L669.8,134.9L673.6,132.8L675.7,130.8L677.3,128.4L677.8,126.8L678.3,124.6L678.7,120.8L678.7,119.4L678.1,114.8L677.8,113.6L677.0,111.6L676.0,110.0L674.0,107.9L672.8,107.0L672.0,106.6L665.2,103.9L658.6,102.9L653.2,102.9L652.5,103.4L652.3,104.2L652.3,134.2L652.2,135.8L652.6,136.6L653.6,137.1L659.3,137.2ZM184.5,162.2L184.9,161.8L185.3,161.0L185.0,159.6L183.9,156.0L183.2,154.4L182.9,153.0L182.2,151.4L181.8,149.6L181.2,148.0L180.0,143.6L178.7,139.4L178.0,137.6L174.8,126.8L174.2,125.4L173.8,123.8L173.2,122.4L172.7,120.2L172.2,119.4L171.6,119.3L171.1,120.0L170.6,122.2L169.6,125.4L169.0,126.8L168.6,128.2L168.0,129.6L167.6,131.4L166.9,133.2L166.5,135.4L165.8,137.8L165.0,139.6L164.0,142.6L163.1,145.2L162.6,147.4L162.0,149.2L161.8,150.4L159.0,158.4L158.4,160.4L158.4,161.2L159.0,162.0L159.8,162.1L184.5,162.2Z"};
+function farmersLogoSVG(cls){
+  return '<svg class="' + cls + '" viewBox="0 0 830 225" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" fill="#fff" d="' + FARMERS_LOGO_PATHS.t + '"/><path fill="#c4b5fd" d="' + FARMERS_LOGO_PATHS.o + '"/><path fill="#9A65FE" d="' + FARMERS_LOGO_PATHS.p + '"/><path fill="#fff" d="' + FARMERS_LOGO_PATHS.n + '"/></svg>';
+}
+function farmersEmblemaSVG(cls){
+  return '<svg class="' + cls + '" viewBox="0 0 200 225" xmlns="http://www.w3.org/2000/svg"><defs>' +
+    '<linearGradient id="pe1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2d9ff"/><stop offset="1" stop-color="#9A65FE"/></linearGradient>' +
+    '<linearGradient id="pe2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a77bff"/><stop offset="1" stop-color="#5b2fe0"/></linearGradient>' +
+    '<linearGradient id="pe3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3532c9"/><stop offset="1" stop-color="#16147f"/></linearGradient></defs>' +
+    '<path fill="url(#pe1)" d="' + FARMERS_LOGO_PATHS.o + '"/><path fill="url(#pe2)" d="' + FARMERS_LOGO_PATHS.p + '"/><path fill="url(#pe3)" d="' + FARMERS_LOGO_PATHS.n + '"/></svg>';
+}
+try {
+  const _s1 = document.getElementById('ch-logo-slot'); if (_s1) _s1.outerHTML = farmersLogoSVG('ch-logo-svg');
+  const _s2 = document.getElementById('wb2-emb-slot'); if (_s2) _s2.outerHTML = farmersEmblemaSVG('wb2-emb');
+} catch(e) {}
+function marcaInfo(br){ const MI = Portal.marcasInfo || {}; return (MI.marcas && MI.marcas[String(br || '').toUpperCase()]) || {}; }
+function catDe(p){ const MI = Portal.marcasInfo || {}; return (MI.cat && p && MI.cat[p.r]) || ''; }
+function descLimpia(p){ const MI = Portal.marcasInfo || {}; return (MI.dl && p && MI.dl[p.r]) || (p && p.d) || ''; }
+// Orden del catálogo (por categoría, igual que el PDF). Sin ese dato → por REF como siempre.
+function ordenarPortal(lista){
+  const idx = Portal._ordIdx;
+  return lista.slice().sort(function(a, b){
+    if (idx) {
+      const ia = (a.r in idx) ? idx[a.r] : 1e9, ib = (b.r in idx) ? idx[b.r] : 1e9;
+      if (ia !== ib) return ia - ib;
+    }
+    return String(a.r || '').localeCompare(String(b.r || ''), 'es', { numeric: true, sensitivity: 'base' });
+  });
 }
 
 // v.255 — Formatea una fecha 'YYYY-MM-DD' o ISO a dd/mm/yyyy para el sello de historial
@@ -1007,6 +1127,15 @@ async function cargarCatalogo() {
 
   setLoadProgress(35, 'Inventario sincronizado');
 
+  // v2026.10.19: logos oficiales, presentación de marcas, categorías y orden del catálogo
+  try {
+    const mkDoc = await getDoc(doc(db, 'data', 'portal_marcas'));
+    if (mkDoc.exists() && mkDoc.data().v) {
+      Portal.marcasInfo = JSON.parse(mkDoc.data().v) || {};
+      if (Array.isArray(Portal.marcasInfo.orden)) { Portal._ordIdx = {}; Portal.marcasInfo.orden.forEach(function(r, i){ Portal._ordIdx[r] = i; }); }
+    }
+  } catch(e) { console.warn('[PORTAL] Sin portal_marcas (se usa el diseño sin logos):', e); }
+
   // ═══ ETAPA 4: Ordenada (farmers_pt_data) — solo si el token lo habilita ═══
   if (cfg.mostrarOrdenada) {
     setLoadProgress(37, 'Cargando mercancía en camino...');
@@ -1132,15 +1261,14 @@ async function cargarCatalogo() {
     return false;
   });
 
-  // Sort alfanumérico por REF
-  Portal.productos.sort((a, b) =>
-    String(a.r || '').localeCompare(String(b.r || ''), 'es', { numeric: true, sensitivity: 'base' })
-  );
+  // Orden del catálogo (categoría) — o por REF si no hay dato
+  Portal.productos = ordenarPortal(Portal.productos);
 
-  // Marcas únicas para filtros
+  // Marcas únicas para filtros, en el mismo orden del catálogo
   const mSet = new Set();
   Portal.productos.forEach(p => { if (p.br) mSet.add(String(p.br).toUpperCase()); });
-  Portal.marcasDisponibles = Array.from(mSet).sort();
+  Portal.marcasDisponibles = Array.from(mSet);
+  if (!Portal._ordIdx) Portal.marcasDisponibles.sort();
 }
 
 // ═══ CARGA DE IMÁGENES — Sistema DUAL (idéntico al admin) ═══
@@ -1438,14 +1566,25 @@ function mostrarCatalogo() {
       : 'Acceso exclusivo para clientes autorizados';
   }
 
-  // Pills de filtros de marca
+  // v2026.10.19: edición y pie de página como en el catálogo
+  try {
+    const _meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const _hoy = new Date();
+    const ed = document.getElementById('wb-edicion'); if (ed) ed.textContent = 'Edición ' + _meses[_hoy.getMonth()] + ' ' + _hoy.getFullYear();
+    const pf = document.getElementById('pf-foot');
+    if (pf) pf.innerHTML = '<span><b>FARMERS C.A.</b> · 0412-0445797 · farmersve@gmail.com · Porlamar, Nueva Esparta</span><span>Precios sujetos a cambio · Vigentes al ' + ('0' + _hoy.getDate()).slice(-2) + '/' + ('0' + (_hoy.getMonth() + 1)).slice(-2) + '/' + _hoy.getFullYear() + '</span>';
+  } catch(e) {}
+
+  // Pills de filtros de marca — con el logo oficial cuando existe
   const pillsContainer = document.getElementById('filter-pills');
   pillsContainer.innerHTML = '<button class="filter-pill active" data-filter="todos">Todos</button>';
   Portal.marcasDisponibles.forEach(m => {
     const p = document.createElement('button');
     p.className = 'filter-pill';
     p.dataset.filter = m;
-    p.textContent = m;
+    const lg = marcaInfo(m).logo;
+    if (lg) { p.classList.add('has-logo'); p.title = m; const im = document.createElement('img'); im.src = lg; im.alt = m; p.appendChild(im); }
+    else p.textContent = m;
     pillsContainer.appendChild(p);
   });
   pillsContainer.querySelectorAll('.filter-pill').forEach(p => {
@@ -1453,6 +1592,7 @@ function mostrarCatalogo() {
       pillsContainer.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active');
       Portal.filtroMarca = p.dataset.filter;
+      Portal.filtroCat = '';
       renderProductos();
     });
   });
@@ -1540,28 +1680,64 @@ async function refrescarSnapshot(motivo) {
 }
 setInterval(function(){ refrescarSnapshot('periodico'); }, 90000);
 
+// v2026.10.19 — Presentación de la marca elegida + sus categorías como filtros
+function renderBrandIntro() {
+  const el = document.getElementById('brand-intro'); if (!el) return;
+  const br = Portal.filtroMarca;
+  if (!br || br === 'todos') { el.className = ''; el.innerHTML = ''; return; }
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const info = marcaInfo(br);
+  const prods = Portal.productos.filter(p => String(p.br || '').toUpperCase() === br);
+  const cats = {}, ord = [];
+  prods.forEach(p => { const c = catDe(p); if (!c) return; if (!(c in cats)) { cats[c] = 0; ord.push(c); } cats[c]++; });
+  ord.sort((a, b) => (cats[b] - cats[a]) || a.localeCompare(b, 'es'));
+  if (Portal.filtroCat && !(Portal.filtroCat in cats)) Portal.filtroCat = '';
+  if (Portal._catsMarca !== br) { Portal._catsMarca = br; Portal._catsAll = false; }
+  const MAXC = 12;
+  let visibles = ord;
+  if (!Portal._catsAll && ord.length > MAXC) { visibles = ord.slice(0, MAXC); if (Portal.filtroCat && visibles.indexOf(Portal.filtroCat) < 0) visibles.push(Portal.filtroCat); }
+  const ocultas = ord.length - visibles.length;
+  el.className = 'on';
+  el.innerHTML =
+    '<div class="bi-logo">' + (info.logo ? '<img src="' + info.logo + '" alt="' + esc(br) + '">' : '<span class="bi-logo-txt">' + esc(br) + '</span>') + '</div>' +
+    '<div>' +
+      (info.desc ? '<p class="bi-kick">Presentación de la marca</p><p class="bi-desc">' + esc(info.desc) + '</p>' : '') +
+      (ord.length ? '<p class="bi-h">Lo que encontrará · ' + prods.length + ' referencias</p><div class="bi-cats">' +
+        '<button class="bi-cat' + (!Portal.filtroCat ? ' on' : '') + '" data-cat="">Todas <b>' + prods.length + '</b></button>' +
+        visibles.map(c => '<button class="bi-cat' + (Portal.filtroCat === c ? ' on' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + ' <b>' + cats[c] + '</b></button>').join('') +
+        (ocultas > 0 ? '<button class="bi-cat bi-mas" data-mas="1">+ ' + ocultas + ' categorías más</button>' : '') +
+      '</div>' : '') +
+    '</div>';
+  el.querySelectorAll('.bi-cat').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.mas) { Portal._catsAll = true; renderBrandIntro(); return; }
+    Portal.filtroCat = b.dataset.cat || ''; renderProductos();
+  }));
+}
+
 function renderProductos() {
+  try { renderBrandIntro(); } catch(e) { console.warn('[PORTAL] presentación de marca:', e); }
   const grid = document.getElementById('products-grid');
   grid.innerHTML = '';
   const noPd = document.getElementById('no-products');
   const counter = document.getElementById('results-counter');
 
-  // REGLA ABSOLUTA: Sort alfanumérico por REF antes de cualquier render
-  const baseList = Portal.productos.slice().sort(function(a, b){
-    return String(a.r || '').localeCompare(String(b.r || ''), 'es', { numeric: true, sensitivity: 'base' });
-  });
+  // Orden del catálogo (por categoría, como el PDF); sin ese dato, por REF
+  const baseList = ordenarPortal(Portal.productos);
 
   const cfgStock = Portal.tokenData.configVista?.mostrarStock || 'disponibilidad';
 
   const filtrados = baseList.filter(p => {
     // Filtro marca
     if (Portal.filtroMarca !== 'todos' && String(p.br || '').toUpperCase() !== Portal.filtroMarca) return false;
+    if (Portal.filtroMarca !== 'todos' && Portal.filtroCat && catDe(p) !== Portal.filtroCat) return false;
 
     // Filtro búsqueda
     if (Portal.filtroBusqueda) {
       const q = Portal.filtroBusqueda;
       if (!String(p.r || '').toLowerCase().includes(q) &&
           !String(p.d || '').toLowerCase().includes(q) &&
+          !String(descLimpia(p)).toLowerCase().includes(q) &&
+          !String(catDe(p)).toLowerCase().includes(q) &&
           !String(p.br || '').toLowerCase().includes(q) &&
           !String(p.b || '').toLowerCase().includes(q) &&
           !String(p.c || '').toLowerCase().includes(q)) return false;
@@ -1589,9 +1765,9 @@ function renderProductos() {
 
   // Contador "X de Y referencias"
   const total = Portal.productos.length;
-  const marcaTxt = Portal.filtroMarca !== 'todos' ? ' · ' + Portal.filtroMarca : '';
+  const marcaTxt = Portal.filtroMarca !== 'todos' ? ' · ' + Portal.filtroMarca + (Portal.filtroCat ? ' · ' + Portal.filtroCat : '') : '';
   const stockTxt = Portal.filtroStock !== 'ALL'
-    ? ' · ' + ({ IN: 'Con stock', LOW: 'Bajo stock', OUT: 'Agotados', ORD: 'Con Ordenada' }[Portal.filtroStock] || '')
+    ? ' · ' + ({ IN: 'Disponible', LOW: 'Pocas unidades', OUT: 'Agotados', ORD: 'En camino' }[Portal.filtroStock] || '')
     : '';
   counter.innerHTML = '<strong>' + filtrados.length + '</strong> de ' + total + ' referencias' + marcaTxt + stockTxt;
 
@@ -1736,58 +1912,31 @@ function crearCardProducto(p) {
   // Escapar descripción mínima (proteger de XSS en datos del catálogo)
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  // v2026.10.19 — ficha igual al catálogo: blanco, texto negro, logo oficial, etiqueta simple
+  card.classList.add('pc2');
+  const brU = String(p.br || '').toUpperCase();
+  const logoMarca = marcaInfo(brU).logo || '';
+  const brandChip = logoMarca
+    ? '<div class="pc2-brand"><img src="' + logoMarca + '" alt="' + esc(brU) + '"></div>'
+    : (brU ? '<div class="pc2-brand"><span class="pc2-brand-txt">' + esc(brU) + '</span></div>' : '');
+  let pillsHTML = '';
+  if (mostrarStockMode !== 'oculto') {
+    if (disp > 0) {
+      const _cl = disp > 10 ? 'ok' : 'low';
+      const _tx = mostrarStockMode === 'exacto' ? (disp + ' uds disponibles') : (disp > 10 ? 'Disponible' : 'Pocas unidades');
+      pillsHTML += '<span class="pc2-pill pc2-' + _cl + '">' + _tx + '</span>';
+    }
+    if (ordLibre > 0) pillsHTML += '<span class="pc2-pill pc2-way">En camino</span>';
+  }
+  const _cel = (l, v) => '<div><div class="pc2-ml">' + l + '</div><div class="pc2-mv">' + esc(v == null || v === '' ? '—' : v) + '</div></div>';
   card.innerHTML =
-    // ══ HEADER con color de marca ══
-    '<div class="pc-brand-header" style="background:' + bColor + ';">' +
-      '<div class="pc-brand-top">' +
-        imgHTML +
-        '<div class="pc-ref-block">' +
-          '<div class="pc-ref">' + esc(p.r) + '</div>' +
-          '<div class="pc-brand-label">' + esc(p.br || '') + '</div>' +
-          badgesStackInline +
-        '</div>' +
-      '</div>' +
-
-      // ══ DATOS fondo blanco ══
-      '<div class="pc-data-block">' +
-        '<div class="pc-desc-box">' +
-          '<div class="pc-data-lbl">DESCRIPCIÓN</div>' +
-          '<div class="pc-data-val">' + esc(p.d || '—') + '</div>' +
-        '</div>' +
-        '<div class="pc-code-grid">' +
-          '<div class="pc-code-cell with-border">' +
-            '<div class="pc-data-lbl">CÓDIGO BARRA</div>' +
-            '<div class="pc-code-val">' + esc(p.b || '—') + '</div>' +
-          '</div>' +
-          '<div class="pc-code-cell">' +
-            '<div class="pc-data-lbl">CÓDIGO</div>' +
-            '<div class="pc-code-val">' + esc(p.c || '—') + '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-
-    // ══ CUERPO: empaque, precio, controles ══
-    '<div class="pc-body">' +
-      '<div class="pc-chips">' +
-        '<div class="pc-chip">' +
-          '<div class="pc-chip-lbl">Empaque</div>' +
-          '<div class="pc-chip-val">' + esc(p.e || '—') + '</div>' +
-        '</div>' +
-        '<div class="pc-chip">' +
-          '<div class="pc-chip-lbl">Medida</div>' +
-          '<div class="pc-chip-val">' + esc(p.m || '—') + '</div>' +
-        '</div>' +
-      '</div>' +
-
-      '<div class="pc-prices-wrap">' +
-        '<div class="pc-prices-header">PRECIO (REF USD)</div>' +
-        '<div class="pc-price-single ' + moneda.toLowerCase() + '">' +
-          '<div class="pc-price-single-lbl">' + moneda + '</div>' +
-          '<div class="pc-price-single-val">' + simboloMoneda() + ' ' + precio.toFixed(2) + '</div>' +
-        '</div>' +
-      '</div>' +
-
+    '<div class="pc2-media">' + imgHTML + brandChip + '</div>' +
+    '<div class="pc2-main">' +
+      '<div class="pc2-row1"><span class="pc2-ref">' + esc(p.r) + '</span><span class="pc2-pills">' + pillsHTML + '</span></div>' +
+      '<div class="pc2-desc">' + esc(descLimpia(p) || '—') + '</div>' +
+      (histBadgeHTML ? '<div class="pc2-hist">' + histBadgeHTML + '</div>' : '') +
+      '<div class="pc2-meta">' + _cel('Cód. barra', p.b) + _cel('Código', p.c) + _cel('Empaque', p.e) + _cel('Medida', p.m) + '</div>' +
+      '<div class="pc2-price"><span class="pc2-price-lbl">Precio ' + moneda + '</span><span class="pc2-price-val">' + simboloMoneda() + ' ' + precio.toFixed(2) + '</span></div>' +
       '<div class="pc-controls">' +
         '<div class="pc-qty-group">' +
           '<button class="pc-qty-btn" data-action="dec" ' + (maxQ === 0 ? 'disabled' : '') + '>−</button>' +
@@ -1798,7 +1947,7 @@ function crearCardProducto(p) {
           (qtyCart > 0 ? '✓ ' + qtyCart + ' uds' + (qtyCart > disp ? ' (' + (qtyCart - Math.max(0, disp)) + ' en camino)' : '') : (disp === 0 && ordLibre > 0 ? 'Reservar' : 'Agregar')) +
         '</button>' +
       '</div>' +
-      (ordLibre > 0 ? '<div style="margin-top:6px;font-size:.66rem;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 7px;line-height:1.35;">' + (disp > 0 ? '📦 También puedes pedir de lo que viene en camino' + llegaTxt + '. Lo que viene en camino se te despacha al llegar.' : '📦 Viene en camino' + llegaTxt + '. Puedes reservarlo ahora y se te despacha al llegar.') + '</div>' : '') +
+      (ordLibre > 0 ? '<div class="pc2-note">' + (disp > 0 ? '📦 También puedes pedir de lo que viene en camino' + llegaTxt + '. Lo que viene en camino se te despacha al llegar.' : '📦 Viene en camino' + llegaTxt + '. Puedes reservarlo ahora y se te despacha al llegar.') + '</div>' : '') +
     '</div>';
 
   // ── Imagen: click para lightbox ──
@@ -2132,7 +2281,7 @@ function descargarPDF() {
       '.header h1 { margin: 0; font-size: 15px; letter-spacing: 1px; font-weight: 900; text-transform: uppercase; }' +
       '.header .num { font-size: 10px; opacity: .95; font-family: "Courier New", monospace; font-weight: 700; margin-top: 2px; }' +
       '.header .date { font-size: 9px; opacity: .85; margin-top: 2px; }' +
-      '.client-info { background: #f8faff; padding: 8px 18px; border-left: 3px solid #F47B3E; }' +
+      '.client-info { background: #f8faff; padding: 8px 18px; border-left: 3px solid #9A65FE; }' +
       '.client-info table { width: 100%; font-size: 9px; }' +
       '.client-info td { padding: 2px 0; }' +
       '.client-info td.lbl { font-weight: 800; color: #475569; width: 90px; text-transform: uppercase; font-size: 8px; letter-spacing: .5px; }' +

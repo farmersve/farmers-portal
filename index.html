@@ -505,6 +505,7 @@
 /* Etiquetas de disponibilidad (iguales al catálogo) */
 .stock-pill { color: var(--f-ink); }
 .stock-pill .sp-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.stock-pill.active .sp-dot { box-shadow: 0 0 0 1.5px #fff; }
 .stock-pill.active { background: #0A096A !important; border-color: #0A096A !important; color: #fff !important; box-shadow: 0 3px 10px rgba(10,9,106,.28) !important; }
 .results-counter { color: var(--f-ink); }
 
@@ -693,6 +694,7 @@
     <button class="stock-pill in" data-stock="IN"><span class="sp-dot" style="background:#16a34a;"></span>Disponible</button>
     <button class="stock-pill low" data-stock="LOW"><span class="sp-dot" style="background:#ca8a04;"></span>Pocas unidades</button>
     <button class="stock-pill ord" data-stock="ORD" id="pill-ord" style="display:none;"><span class="sp-dot" style="background:#4f46e5;"></span>En camino</button>
+    <button class="stock-pill" data-stock="NEW" id="pill-new" style="display:none;"><span class="sp-dot" style="background:#000;"></span>Nuevos</button>
   </div>
 
   <div id="brand-intro"></div>
@@ -1758,6 +1760,7 @@ function renderProductos() {
       if (Portal.filtroStock === 'LOW' && !(disp > 0 && disp <= 10)) return false;
       if (Portal.filtroStock === 'OUT' && !(disp === 0)) return false;
       if (Portal.filtroStock === 'ORD' && !(getOrdenada(p.r) > 0)) return false;
+      if (Portal.filtroStock === 'NEW' && !(Portal.refsNuevas && Portal.refsNuevas.has(p.r))) return false;
     }
 
     return true;
@@ -1767,7 +1770,7 @@ function renderProductos() {
   const total = Portal.productos.length;
   const marcaTxt = Portal.filtroMarca !== 'todos' ? ' · ' + Portal.filtroMarca + (Portal.filtroCat ? ' · ' + Portal.filtroCat : '') : '';
   const stockTxt = Portal.filtroStock !== 'ALL'
-    ? ' · ' + ({ IN: 'Disponible', LOW: 'Pocas unidades', OUT: 'Agotados', ORD: 'En camino' }[Portal.filtroStock] || '')
+    ? ' · ' + ({ IN: 'Disponible', LOW: 'Pocas unidades', OUT: 'Agotados', ORD: 'En camino', NEW: 'Nuevos' }[Portal.filtroStock] || '')
     : '';
   counter.innerHTML = '<strong>' + filtrados.length + '</strong> de ' + total + ' referencias' + marcaTxt + stockTxt;
 
@@ -1898,7 +1901,7 @@ function crearCardProducto(p) {
      libera cuando queda lejos. Evita que el teléfono decodifique cientos de fotos
      a la vez (causa del crash por falta de memoria en móviles). */
   const nuevoTag = (Portal.refsNuevas && Portal.refsNuevas.has(p.r))
-    ? '<div style="position:absolute;top:8px;left:8px;background:#dc2626;color:#fff;font-size:.56rem;font-weight:900;padding:3px 8px;border-radius:999px;z-index:2;letter-spacing:.5px;box-shadow:0 2px 6px rgba(0,0,0,.25);">NUEVO</div>'
+    ? '<div style="position:absolute;top:8px;left:8px;background:#000;color:#fff;font-family:var(--f-display);font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:4px;z-index:2;letter-spacing:1.8px;">NUEVO</div>'
     : ''; /* v2026.10.03 */
   const _ids1013 = [p.r, p.c, p.b].filter(function(x){ return x !== undefined && x !== null && String(x).trim() !== ''; }).map(function(x){ return String(x).trim().replace(/[|"<>]/g, ''); }).join('|');
   const imgHTML = '<div class="pc-image" style="position:relative;" data-imgids="' + _ids1013 + '" data-ref="' + (p.r || '') + '">' + nuevoTag +
@@ -2566,6 +2569,17 @@ function _pvPrecio(p){
   return m === 'BCV' ? bv : (m === 'TF' ? t : u);
 }
 function pvCalcularNuevos(){
+  // v2026.10.22: códigos NUEVOS definidos por el sistema de pedidos (no los que se reponen)
+  try {
+    const MI = Portal.marcasInfo || {};
+    if (Array.isArray(MI.nuevos)) {
+      const vis = new Set((Portal.productos || []).map(function(p){ return p.r; }));
+      Portal.refsNuevas = new Set(MI.nuevos.filter(function(r){ return vis.has(r); }));
+      const pn = document.getElementById('pill-new');
+      if (pn) pn.style.display = Portal.refsNuevas.size ? '' : 'none';
+      return;
+    }
+  } catch(e){}
   try {
     var k = 'farmers_refs_vistas_' + Portal.token;
     var prev = JSON.parse(localStorage.getItem(k) || 'null');

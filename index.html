@@ -2527,7 +2527,26 @@ function entrarAlPortal(data){
     document.getElementById('cli-rif').value = data.rifEsperado || '';
   }
   if (Portal.vendedor) vdPrefill(data); // v2026.10.23
+  cdChipMaestra(); // v2026.10.23b
   showScreen('screen-form');
+}
+/* v2026.10.23b: aviso visible cuando este equipo entra con la LLAVE MAESTRA del director
+   (así no parece que el código SMS "no funciona": el cliente sí lo ve). */
+function cdChipMaestra(){
+  try {
+    if (!Portal._esMaster || document.getElementById('cd-master-chip')) return;
+    var c = document.createElement('div');
+    c.id = 'cd-master-chip';
+    c.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#000;color:#fff;font:800 .7rem/1.35 -apple-system,Segoe UI,Roboto,Arial,sans-serif;letter-spacing:.3px;padding:8px 12px;display:flex;align-items:center;gap:10px;';
+    c.innerHTML = '<span style="flex:1;">🔑 LLAVE MAESTRA ACTIVA EN ESTE EQUIPO — por eso entraste sin código. Tus clientes SÍ ven el código SMS.</span>' +
+      '<button id="cd-master-quitar" style="background:#fff;color:#000;border:none;border-radius:6px;padding:6px 10px;font-weight:900;font-size:.66rem;cursor:pointer;white-space:nowrap;">QUITAR LLAVE</button>';
+    document.body.appendChild(c);
+    document.getElementById('cd-master-quitar').addEventListener('click', function(){
+      if (!confirm('¿Quitar la llave maestra de este equipo?\n\nDesde ahora este equipo también tendrá que poner el código SMS en cada portal (como un cliente). Para volver a tenerla, verifica con tu propio teléfono en cualquier portal.')) return;
+      try { localStorage.removeItem('farmers_candado_master'); } catch(e){}
+      location.reload();
+    });
+  } catch(e){}
 }
 function _cdMsg(html, color){
   var el = document.getElementById('cd-msg');

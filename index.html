@@ -561,6 +561,30 @@
 /* Pie con datos de contacto */
 .pf-foot { margin: 8px var(--f-gutter) 0; padding: 16px 0 6px; border-top: 1px solid #dfe3ea; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; font-size: .62rem; font-weight: 700; letter-spacing: .6px; color: var(--f-ink); }
 .pf-foot b { letter-spacing: 1.5px; }
+
+/* ═══ v2026.10.23 MODO VENDEDOR ═══ */
+#screen-vendedor.screen.active { display: block; min-height: 100vh; background: linear-gradient(155deg, #08075c, #100d80 60%, #1c148f); padding: 22px 14px 40px; }
+.vd-card { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 18px; padding: 22px 18px; box-shadow: 0 14px 50px rgba(0,0,0,.35); }
+.vd-kick { font-size: .62rem; font-weight: 900; letter-spacing: 2.4px; color: #000; text-transform: uppercase; }
+.vd-name { font-size: 1.35rem; font-weight: 900; color: #000; margin: 2px 0 4px; text-transform: uppercase; letter-spacing: .5px; }
+.vd-sub { font-size: .74rem; color: #475569; margin-bottom: 14px; }
+.vd-search { width: 100%; box-sizing: border-box; border: 1.5px solid #000; border-radius: 11px; padding: 12px 14px; font-size: .9rem; margin-bottom: 12px; }
+.vd-cli { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; font-family: inherit; }
+.vd-cli:hover, .vd-cli:active { border-color: #000; }
+.vd-cli b { display: block; font-size: .86rem; color: #000; text-transform: uppercase; }
+.vd-cli span { display: block; font-size: .68rem; color: #64748b; margin-top: 2px; }
+.vd-cli i { margin-left: auto; font-style: normal; font-weight: 900; color: #000; }
+.vd-empty { text-align: center; color: #64748b; font-size: .8rem; padding: 24px 8px; }
+#vd-bar { display: none; align-items: center; gap: 10px; background: #000; color: #fff; padding: 8px 14px; font-size: .72rem; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+#vd-bar.on { display: flex; }
+#vd-bar .vd-bar-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#vd-bar button { background: #fff; color: #000; border: none; border-radius: 7px; padding: 6px 10px; font-weight: 900; font-size: .66rem; cursor: pointer; text-transform: uppercase; white-space: nowrap; }
+.cart-notas-lbl { display: block; font-size: .66rem; font-weight: 900; letter-spacing: .8px; color: #000; text-transform: uppercase; margin: 10px 0 5px; }
+.cart-notas { width: 100%; box-sizing: border-box; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font-size: .82rem; font-family: inherit; resize: vertical; min-height: 56px; margin-bottom: 10px; }
+.vd-wa-btn { display: block; text-align: center; text-decoration: none; background: #128C7E; color: #fff; border-radius: 13px; padding: 15px 18px; font-weight: 900; font-size: .92rem; letter-spacing: .4px; margin: 4px 0 6px; box-shadow: 0 6px 16px rgba(18,140,126,.35); }
+.vd-wa-btn.ok { background: #000; box-shadow: none; }
+.vd-wa-nota { font-size: .68rem; color: #475569; text-align: center; margin-bottom: 12px; line-height: 1.45; }
+
 </style>
 </head>
 <body>
@@ -616,6 +640,17 @@
   </div>
 </div>
 
+<!-- ═══ v2026.10.23 MODO VENDEDOR: lista de sus clientes ═══ -->
+<div id="screen-vendedor" class="screen">
+  <div class="vd-card">
+    <div class="vd-kick">Farmers C.A. · Modo vendedor</div>
+    <div class="vd-name" id="vd-name">Vendedor</div>
+    <div class="vd-sub" id="vd-sub">Elige el cliente que estás visitando para cargar su pedido.</div>
+    <input type="search" id="vd-search" class="vd-search" placeholder="Buscar cliente por nombre o RIF...">
+    <div id="vd-list"></div>
+  </div>
+</div>
+
 <div id="screen-form" class="screen">
   <div class="form-card">
     <div class="form-header">
@@ -666,6 +701,8 @@
       🛒 <span class="ch-cart-badge" id="cart-badge">0</span>
     </button>
   </div>
+
+  <div id="vd-bar"></div>
 
   <!-- ═══ PORTAL VENDE-SOLO v2026.10.03: pedidos recientes · frecuentes ═══ -->
   <div id="pv-zona" style="display:none;padding:12px 14px 2px;"></div>
@@ -749,6 +786,7 @@
       Tu pedido ha sido enviado a Farmers C.A. El equipo lo revisará y se comunicará contigo pronto.
     </p>
     <div class="confirm-order-num" id="confirm-order-num">PORTAL-XXXX</div>
+    <div id="vd-wa-box"></div>
     <div class="confirm-actions">
       <button class="confirm-btn confirm-btn-primary" id="btn-download-pdf">📄 Descargar PDF</button>
       <button class="confirm-btn confirm-btn-primary" id="btn-download-excel">📊 Descargar Excel</button>
@@ -903,6 +941,7 @@ async function validarToken() {
       mostrarError('Este link ha sido desactivado. Por favor contacta a Farmers C.A. para reactivarlo o solicitar uno nuevo.');
       return;
     }
+    if (data.tipo === 'vendedor') { clearTimeout(safetyTimeout); vdIniciar(token, data); return; } // v2026.10.23
     Portal.tokenData = data;
 
     // Registrar último acceso (fire-and-forget)
@@ -958,6 +997,7 @@ document.getElementById('form-submit').addEventListener('click', async () => {
   }
 
   Portal.clienteForm = { nombre, razon, rif, telefono: tel };
+  if (Portal.vendedor) { try { localStorage.setItem('farmers_vd_form_' + Portal.token, JSON.stringify(Portal.clienteForm)); } catch(e){} } // v2026.10.23
 
   // Ocultar botón y mostrar barra de progreso
   const btn = document.getElementById('form-submit');
@@ -2126,8 +2166,12 @@ function abrirCarrito() {
     footer.innerHTML =
       '<div class="cart-total-row"><span>Productos:</span><span>' + totalQty + '</span></div>' +
       '<div class="cart-total-row total"><span>Total:</span><span>' + simb + total.toFixed(2) + '</span></div>' +
+      '<label class="cart-notas-lbl" for="cart-notas">Notas del pedido (opcional)</label>' +
+      '<textarea id="cart-notas" class="cart-notas" maxlength="400" placeholder="Ej: entregar antes del jueves"></textarea>' +
       '<button class="cart-send-btn" id="btn-send-order">Enviar pedido a Farmers C.A.</button>';
 
+    const _nt = document.getElementById('cart-notas'); // v2026.10.23
+    if (_nt) { _nt.value = Portal.notas || ''; _nt.addEventListener('input', function(){ Portal.notas = _nt.value; }); }
     document.getElementById('btn-send-order').addEventListener('click', enviarPedido);
   }
 
@@ -2233,6 +2277,8 @@ async function enviarPedido() {
       estado: 'pendiente',
       sincronizadoAFarmers: false,
       conEnCamino: items.some(function(x){ return x.qtyEnCamino > 0; }), // v2026.10.15b
+      notas: String(Portal.notas || '').trim().slice(0, 400), // v2026.10.23
+      tomadoPor: Portal.vendedor ? { codigo: Portal.vendedor.codigo, nombre: Portal.vendedor.nombre, token: Portal.vendedor.token } : null,
     };
 
     const ref = await addDoc(collection(db, 'portal_pedidos'), pedido);
@@ -2240,6 +2286,8 @@ async function enviarPedido() {
 
     document.getElementById('cart-modal').classList.remove('active');
     document.getElementById('confirm-order-num').textContent = 'PORTAL-' + ref.id.substring(0, 8).toUpperCase();
+    Portal.notas = '';
+    vdPostEnvio(); // v2026.10.23
     showScreen('screen-confirm');
   } catch (e) {
     console.error(e);
@@ -2255,6 +2303,8 @@ document.getElementById('btn-download-excel').addEventListener('click', descarga
 document.getElementById('btn-new-order').addEventListener('click', () => {
   Portal.carrito = {};
   Portal.pedidoEmitido = null;
+  Portal.notas = '';
+  try { document.getElementById('vd-wa-box').innerHTML = ''; } catch(e){}
   actualizarCarritoUI();
   renderProductos();
   showScreen('screen-catalog');
@@ -2476,6 +2526,7 @@ function entrarAlPortal(data){
     document.getElementById('cli-razon').value = data.clienteNombre || '';
     document.getElementById('cli-rif').value = data.rifEsperado || '';
   }
+  if (Portal.vendedor) vdPrefill(data); // v2026.10.23
   showScreen('screen-form');
 }
 function _cdMsg(html, color){
@@ -2555,6 +2606,124 @@ function candadoMostrar(data){
       _cdMsg('⛔ Código incorrecto o vencido. Reintenta o pide uno nuevo.', '#dc2626');
     }
   };
+}
+
+/* ═══ v2026.10.23 MODO VENDEDOR ═══════════════════════════════════════════
+   El vendedor entra con SU link (portal_tokens tipo 'vendedor'): ve solo sus
+   clientes, elige uno y carga el pedido en el portal de ese cliente (sus
+   precios, su candado). El pedido queda marcado "tomado por" y, al enviarlo,
+   un botón abre WhatsApp con el pedido escrito hacia la oficina.          */
+const VD_ADMIN_URL = 'https://farmersve.github.io/farmers-app/';
+function vdEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function vdIniciar(vtoken, vdata){
+  Portal.vendedor = {
+    token: vtoken,
+    codigo: String(vdata.vendedorCodigo || '').toUpperCase(),
+    nombre: String(vdata.vendedorNombre || vdata.vendedorCodigo || 'Vendedor'),
+    wa: _cdNorm(vdata.waOficina || '') || CANDADO_WA,
+    adminUrl: vdata.adminUrl || VD_ADMIN_URL
+  };
+  try { setDoc(doc(db, 'portal_tokens', vtoken), { ultimoAcceso: serverTimestamp() }, { merge: true }).catch(function(){}); } catch(e){}
+  const clientes = (vdata.clientes || []).filter(function(c){ return c && c.token; })
+    .sort(function(a, b){ return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' }); });
+  document.getElementById('vd-name').textContent = Portal.vendedor.nombre;
+  document.getElementById('vd-sub').textContent = clientes.length
+    ? 'Elige el cliente que estás visitando para cargar su pedido · ' + clientes.length + (clientes.length === 1 ? ' cliente' : ' clientes')
+    : 'Todavía no tienes clientes asignados. Pídele a la oficina que te los asigne.';
+  const pintar = function(f){
+    const q = String(f || '').trim().toUpperCase();
+    const vis = clientes.filter(function(c){ return !q || (String(c.nombre || '') + ' ' + String(c.rif || '')).toUpperCase().indexOf(q) >= 0; });
+    const list = document.getElementById('vd-list');
+    list.innerHTML = vis.length ? vis.map(function(c){
+      return '<button class="vd-cli" data-tk="' + vdEsc(c.token) + '"><div><b>' + vdEsc(c.nombre || '(sin nombre)') + '</b><span>RIF: ' + vdEsc(c.rif || '—') + '</span></div><i>›</i></button>';
+    }).join('') : (clientes.length ? '<div class="vd-empty">Ningún cliente coincide con la búsqueda.</div>' : '');
+    list.querySelectorAll('.vd-cli').forEach(function(b){ b.addEventListener('click', function(){ vdElegirCliente(b.dataset.tk); }); });
+  };
+  const inp = document.getElementById('vd-search');
+  inp.value = '';
+  inp.oninput = function(){ pintar(inp.value); };
+  pintar('');
+  showScreen('screen-vendedor');
+}
+async function vdElegirCliente(ctoken){
+  showScreen('screen-loading');
+  try {
+    const d = await getDoc(doc(db, 'portal_tokens', ctoken));
+    if (!d.exists() || d.data().tipo === 'vendedor') { alert('⛔ Ese cliente ya no tiene un link válido. Avísale a la oficina.'); showScreen('screen-vendedor'); return; }
+    const data = d.data();
+    if (data.activo === false) { alert('⛔ El link de ' + (data.clienteNombre || 'este cliente') + ' está desactivado. Avísale a la oficina.'); showScreen('screen-vendedor'); return; }
+    Portal.token = ctoken;
+    Portal.tokenData = data;
+    Portal.carrito = {}; Portal.pedidoEmitido = null; Portal.notas = '';
+    const bar = document.getElementById('vd-bar');
+    bar.innerHTML = '<span class="vd-bar-t">👔 ' + vdEsc(Portal.vendedor.nombre) + ' · ' + vdEsc(data.clienteNombre || 'Cliente') + '</span><button id="vd-cambiar">Cambiar cliente</button>';
+    bar.classList.add('on');
+    document.getElementById('vd-cambiar').addEventListener('click', vdCambiarCliente);
+    const gate = candadoEstado(data);
+    if (gate === 'otp') { candadoMostrar(data); return; }
+    entrarAlPortal(data);
+  } catch(e) {
+    console.error('[vendedor] elegir cliente:', e);
+    alert('⛔ No se pudo abrir el cliente: ' + (e.message || e) + '. Revisa la conexión e intenta de nuevo.');
+    showScreen('screen-vendedor');
+  }
+}
+function vdCambiarCliente(){
+  const n = Object.keys(Portal.carrito || {}).length;
+  if (n && !confirm('Tienes ' + n + ' producto(s) en el carrito que todavía no enviaste.\n\n¿Cambiar de cliente y descartarlos?')) return;
+  location.href = location.pathname + '?token=' + encodeURIComponent(Portal.vendedor.token);
+}
+function vdPrefill(data){
+  let f = null; try { f = JSON.parse(localStorage.getItem('farmers_vd_form_' + Portal.token) || 'null'); } catch(e){}
+  document.getElementById('form-welcome-title').textContent = 'Pedido para';
+  document.getElementById('cli-nombre').value = (f && f.nombre) || '';
+  document.getElementById('cli-telefono').value = (f && f.telefono) || '';
+  if (f && f.razon) document.getElementById('cli-razon').value = f.razon;
+  if (f && f.rif) document.getElementById('cli-rif').value = f.rif;
+}
+function vdHora(d){
+  const h = d.getHours(), m = d.getMinutes();
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + ' ' +
+    ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h < 12 ? 'am' : 'pm');
+}
+function vdNum(n){ return Number(n || 0).toLocaleString('es-VE'); }
+function vdMensaje(p){
+  const num = 'PORTAL-' + p.id.substring(0, 8).toUpperCase();
+  const cli = p.cliente || {};
+  const linea = function(it, q){ return '• ' + it.ref + ' ' + String(descLimpia({ r: it.ref, d: it.desc }) || '').toUpperCase() + ' — ' + vdNum(q) + ' uds'; };
+  const disp = [], cam = [];
+  (p.items || []).forEach(function(it){
+    const ec = Math.max(0, Math.min(it.qty, parseInt(it.qtyEnCamino) || 0));
+    if (it.qty - ec > 0) disp.push(linea(it, it.qty - ec));
+    if (ec > 0) cam.push(linea(it, ec));
+  });
+  const refs = {}; (p.items || []).forEach(function(it){ refs[it.ref] = 1; });
+  const uds = (p.items || []).reduce(function(s, it){ return s + (parseInt(it.qty) || 0); }, 0);
+  const tp = p.tomadoPor || {};
+  let t = '🛒 NUEVO PEDIDO #' + num + '\n' +
+    'Cliente: ' + String(cli.razon || '').toUpperCase() + (cli.rif ? ' · ' + String(cli.rif).toUpperCase() : '') + '\n' +
+    'Tomado por: ' + String(tp.nombre || tp.codigo || '').toUpperCase() + ' · ' + vdHora(p.fechaLocal || new Date()) + '\n';
+  if (disp.length) t += '\nDISPONIBLE\n' + disp.join('\n');
+  if (cam.length) t += (disp.length ? '\n' : '\n') + 'EN CAMINO (preventa)\n' + cam.join('\n');
+  t += '\n\nTotal: ' + Object.keys(refs).length + ' refs · ' + vdNum(uds) + ' uds';
+  if (p.notas) t += '\nNotas: ' + p.notas;
+  t += '\n👉 Abrir en el sistema: ' + (Portal.vendedor.adminUrl || VD_ADMIN_URL) + '#pedido=' + p.id;
+  return t;
+}
+window._vdMensaje = vdMensaje; // diagnóstico
+function vdPostEnvio(){
+  const box = document.getElementById('vd-wa-box');
+  if (!box) return;
+  if (!Portal.vendedor || !Portal.pedidoEmitido) { box.innerHTML = ''; return; }
+  const p = Portal.pedidoEmitido;
+  try { const cd = document.querySelector('#screen-confirm .confirm-desc'); if (cd) cd.textContent = 'El pedido de ' + ((p.cliente && p.cliente.razon) || 'el cliente') + ' quedó registrado en el sistema de Farmers C.A. Ahora avisa a la oficina por WhatsApp.'; } catch(e){}
+  const url = 'https://wa.me/' + Portal.vendedor.wa + '?text=' + encodeURIComponent(vdMensaje(p));
+  box.innerHTML = '<a class="vd-wa-btn" id="vd-wa-link" href="' + url + '" target="_blank" rel="noopener">📲 Enviar a la oficina por WhatsApp</a>' +
+    '<div class="vd-wa-nota" id="vd-wa-nota">El pedido ya quedó en el sistema. Este mensaje avisa a la oficina para que lo procese de una vez.</div>';
+  document.getElementById('vd-wa-link').addEventListener('click', function(){
+    this.classList.add('ok'); this.textContent = '✓ Mensaje abierto en WhatsApp (tócalo de nuevo si no se envió)';
+    try { setDoc(doc(db, 'portal_pedidos', p.id), { waAvisado: true, waAvisadoEn: new Date().toISOString() }, { merge: true }).catch(function(){}); } catch(e){}
+  });
 }
 
 /* ═══ PORTAL VENDE-SOLO v2026.10.03 ════════════════════════════════════════

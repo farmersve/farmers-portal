@@ -548,7 +548,9 @@
 .pc2-hist { margin-top: 6px; }
 .pc2 .pc-historial-badge { background: #f3f4f6; color: var(--f-ink); border: 1px solid #e5e7eb; }
 .pc2 .pc-historial-badge .pc-historial-fecha { color: var(--f-ink); }
-.pc2-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eef0f4; }
+.pc2-meta { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 7px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eef0f4; align-items: end; }
+.pc2-meta > div { min-width: 0; }
+.pc2-meta .pc2-s2 { grid-column: span 2; }
 .pc2-ml { font-size: .54rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--f-ink); }
 .pc2-mv { font-size: .8rem; font-weight: 700; color: var(--f-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc2-price { display: flex; align-items: baseline; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eef0f4; }
@@ -1971,14 +1973,16 @@ function crearCardProducto(p) {
     }
     if (ordLibre > 0) pillsHTML += '<span class="pc2-pill pc2-way">En camino</span>';
   }
-  const _cel = (l, v) => '<div><div class="pc2-ml">' + l + '</div><div class="pc2-mv">' + esc(v == null || v === '' ? '—' : v) + '</div></div>';
+  const _cel = (l, v, ancho2) => '<div' + (ancho2 ? ' class="pc2-s2"' : '') + '><div class="pc2-ml">' + l + '</div><div class="pc2-mv">' + esc(v == null || v === '' ? '—' : v) + '</div></div>';
+  // Piezas por display: lo calcula el sistema (bulto ÷ inner del Master Data) y viene en el snapshot
+  const _pd = (Portal.snapshot && Portal.snapshot[p.r] && parseInt(Portal.snapshot[p.r].pd, 10) > 0) ? parseInt(Portal.snapshot[p.r].pd, 10) : null;
   card.innerHTML =
     '<div class="pc2-media">' + imgHTML + brandChip + '</div>' +
     '<div class="pc2-main">' +
       '<div class="pc2-row1"><span class="pc2-ref">' + esc(p.r) + '</span><span class="pc2-pills">' + pillsHTML + '</span></div>' +
       '<div class="pc2-desc">' + esc(descLimpia(p) || '—') + '</div>' +
       (histBadgeHTML ? '<div class="pc2-hist">' + histBadgeHTML + '</div>' : '') +
-      '<div class="pc2-meta">' + _cel('Cód. barra', p.b) + _cel('Código', p.c) + _cel('Empaque', p.e) + _cel('Medida', p.m) + '</div>' +
+      '<div class="pc2-meta">' + _cel('Código barra', p.b, true) + _cel('Código', p.c, true) + _cel('Empaque', p.e, true) + _cel('Uds/<wbr>Bulto', p.m) + _cel('Uds/<wbr>Display', _pd) + '</div>' +
       '<div class="pc2-price"><span class="pc2-price-lbl">Precio ' + moneda + '</span><span class="pc2-price-val">' + simboloMoneda() + ' ' + precio.toFixed(2) + '</span></div>' +
       '<div class="pc-controls">' +
         '<div class="pc-qty-group">' +

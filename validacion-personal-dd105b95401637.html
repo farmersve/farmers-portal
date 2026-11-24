@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Verificación de celular · Farmers</title>
+<style>
+:root{font:16px/1.5 system-ui,sans-serif;color:#172145;background:#eef2f9}
+[hidden]{display:none!important}main{max-width:480px;margin:32px auto;background:#fff;border:1px solid #d8dfed;border-top:4px solid #e77b41;border-radius:12px;padding:24px}
+form,label{display:grid;gap:8px}form{margin:16px 0}input,button{font:inherit;border-radius:7px;padding:9px;border:1px solid #bac5da}
+button{background:#223475;color:white;font-weight:650;cursor:pointer}h1{font-size:22px;margin:0 0 9px}p{margin:4px 0}output{font-size:14px}
+</style>
+</head>
+<body><main>
+<h1>Verificación de celular</h1>
+<p>Usa tu propio número. Introduce el código únicamente en esta pantalla.</p>
+<p id="estado" role="status" aria-live="polite">Comprobando el enlace temporal…</p>
+<form id="telefono" hidden>
+<label>Celular<input name="numero" type="tel" autocomplete="tel" placeholder="+58 412 …" required maxlength="32"></label>
+<button>Enviar código SMS</button><div id="recaptcha"></div>
+</form>
+<form id="codigo" hidden>
+<label>Código de seis dígitos<input name="codigo" inputmode="numeric" autocomplete="one-time-code" required pattern="[0-9]{6}" maxlength="6"></label>
+<button>Verificar celular</button>
+</form>
+
+</main>
+<script type="module">
+const sello = '4fa5644d99504c58b35b9ea520b0318129d0f2a7049e4a1c7f4af58f7f49759f';
+const vence = 1795560232;
+const clave = location.hash.slice(1);
+const estado = document.getElementById('estado');
+const t = document.getElementById('telefono'), c = document.getElementById('codigo');
+let conf, verif, numero, auth, firebase;
+const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(clave));
+const huella = [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const vigente = () => Math.floor(Date.now()/1000) <= vence;
+if (huella === sello && vigente()) {
+  history.replaceState(null, '', location.pathname);
+  const app = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  firebase = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+  auth = firebase.getAuth(app.initializeApp({
+    apiKey:'AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk',
+    authDomain:'farmers-app-70a3a.firebaseapp.com',
+    projectId:'farmers-app-70a3a'
+  }, 'farmers-verificacion-personal'));
+  await firebase.setPersistence(auth, firebase.inMemoryPersistence);
+  auth.languageCode = 'es';
+  t.hidden = false;
+  estado.textContent = 'Ingresa el celular que autorizó Farmers para esta prueba.';
+} else estado.textContent = 'El enlace temporal no es válido o ya venció.';
+t.onsubmit = async e => {
+  e.preventDefault();
+  if (!auth || !vigente()) return;
+  numero = t.elements.numero.value.trim().replace(/[\s().-]/g,'');
+  if (/^04\d{9}$/.test(numero)) numero = '+58' + numero.slice(1);
+  if (!/^\+58\d{10}$/.test(numero)) { estado.textContent='Escribe el celular venezolano con +58 o en formato 04…';return; }
+  const b = t.querySelector('button'); b.disabled = true;
+  try {
+    verif?.clear();
+    verif = new firebase.RecaptchaVerifier(auth,'recaptcha',{size:'invisible'});
+    conf = await firebase.signInWithPhoneNumber(auth,numero,verif);
+    t.hidden = true; c.hidden = false;
+    estado.textContent='SMS solicitado para el número terminado en '+numero.slice(-4)+'.';
+    c.elements.codigo.focus();
+  } catch(error) { estado.textContent='El SMS no se pudo enviar ('+error.code+').'; }
+  finally { b.disabled = false; }
+};
+c.onsubmit = async e => {
+  e.preventDefault();
+  if (!conf || !vigente()) return;
+  const b = c.querySelector('button'); b.disabled = true;
+  try {
+    const result = await conf.confirm(c.elements.codigo.value.trim());
+    if (result.user.phoneNumber !== numero) throw new Error('El número verificado no coincide.');
+    c.reset(); c.hidden = true;
+    estado.textContent='Celular verificado. Número terminado en '+numero.slice(-4)+'.';
+    await firebase.signOut(auth);
+  } catch(error) { estado.textContent='No se pudo confirmar el código ('+(error.code||'verificación')+').'; }
+  finally { b.disabled = false; }
+};
+</script></body></html>

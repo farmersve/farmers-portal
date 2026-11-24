@@ -749,17 +749,58 @@ input,select,textarea{font-family:inherit;font-size:16px}
 <!-- ══════════ Firebase + lógica portal ══════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, serverTimestamp, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"; /* PORTAL CANDADO v2026.10.02 */
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk",
-  authDomain: "farmers-app-70a3a.firebaseapp.com",
-  projectId: "farmers-app-70a3a"
-});
-const db = getFirestore(app);
-window._pDb = db; // v.257: expuesto solo para diagnóstico por consola (F12) — no cambia ningún comportamiento
-const _auth = getAuth(app); _auth.languageCode = 'es'; /* PORTAL CANDADO v2026.10.02 */
+const local = ['127.0.0.1', 'localhost'].includes(location.hostname);
+const app = initializeApp(local
+  ? { apiKey: 'demo-farmers-accesos', projectId: 'demo-farmers-accesos' }
+  : { apiKey: "AIzaSyC73pXz_txRknUZVvcDjjQuqCp7oaniWqk", authDomain: "farmers-app-70a3a.firebaseapp.com", projectId: "farmers-app-70a3a" });
+const _auth = getAuth(app);
+const fn = getFunctions(app);
+if (local) {
+  connectAuthEmulator(_auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFunctionsEmulator(fn, '127.0.0.1', 5001);
+}
+_auth.languageCode = 'es';
+
+const db = null;
+const doc = (_, coleccion, id) => ({ coleccion, id });
+const collection = (_, coleccion) => ({ coleccion });
+const where = (campo, operador, valor) => ({ campo, operador, valor });
+const query = (ruta, condicion) => ({ ...ruta, condicion });
+const serverTimestamp = () => null;
+const servicioPortal = httpsCallable(fn, 'portalClientes');
+const llamarPortal = (accion, datos = {}) => servicioPortal({
+  accion, token: Portal.token, vendedor: Portal.vendedor?.token || null, ...datos
+}).then(r => r.data);
+const documento = (v, id) => ({ id, exists: () => v !== null, data: () => v });
+async function getDoc(ruta) {
+  if (ruta.coleccion === 'portal_tokens') return documento(await llamarPortal('token', { token: ruta.id }), ruta.id);
+  if (ruta.coleccion === 'img') return documento(await llamarPortal('imagen', { id: ruta.id }), ruta.id);
+  if (ruta.coleccion === 'data') return documento(await llamarPortal('dato', { id: ruta.id }), ruta.id);
+  throw new Error('Vista no disponible.');
+}
+async function getDocs(ruta) {
+  if (ruta.coleccion === 'img') return [];
+  if (ruta.coleccion !== 'portal_pedidos' || ruta.condicion?.campo !== 'token' || ruta.condicion.operador !== '=='
+      || ruta.condicion.valor !== Portal.token) throw new Error('Vista no disponible.');
+  return (await llamarPortal('pedidos')).map(d => documento(d.datos, d.id));
+}
+async function setDoc(ruta) {
+  if (ruta.coleccion === 'portal_tokens') return llamarPortal('acceso', { token: ruta.id,
+    vendedor: ruta.id === Portal.vendedor?.token ? null : Portal.vendedor?.token || null });
+  if (ruta.coleccion === 'portal_pedidos') return llamarPortal('avisado', { id: ruta.id });
+  throw new Error('Operación no disponible.');
+}
+let intentoEnvio = null;
+async function addDoc(ruta, pedido) {
+  if (ruta.coleccion !== 'portal_pedidos') throw new Error('Operación no disponible.');
+  intentoEnvio ||= crypto.randomUUID();
+  const ref = await llamarPortal('crear', { intento: intentoEnvio, pedido });
+  intentoEnvio = null;
+  return ref;
+}
 
 // ═══ Estado global ═══
 const Portal = {
@@ -888,6 +929,7 @@ async function validarToken() {
       return;
     }
     Portal.token = token;
+    await _auth.authStateReady();
 
     // Cargar logo Farmers del catálogo (doc 'config/logo' que guardamos desde admin)
     try {
@@ -2829,11 +2871,6 @@ window.addEventListener('unhandledrejection', function(ev) {
    - Modo por token: candado='estricto' exige teléfono registrado;
      ausente o 'suave' deja pasar a clientes sin teléfono (transición).  */
 const CANDADO_WA = '584120445797';
-/* LLAVE MAESTRA v2026.10.03b: huella SHA-256 del teléfono del director.
-   Permite supervisar cualquier portal verificando con SU propio SMS.
-   El número nunca aparece legible aquí — solo su huella. */
-const CANDADO_MASTER_HASH = '2a23ce948835538ef187e06c0d6a1899c119c699b5bd7f5e44ebb70458cbb530';
-
 function _cdNorm(t){
   var d = String(t||'').replace(/\D/g,'');
   if (!d) return '';
@@ -2842,21 +2879,9 @@ function _cdNorm(t){
   else if (d.charAt(0) === '4' && d.length === 10) d = '58' + d;
   return (d.length >= 12 && d.length <= 13 && d.slice(0,2) === '58') ? d : '';
 }
-async function _cdHash(norm){
-  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
 function candadoEstado(data){
-  try {
-    /* v2026.10.03b: pase maestro recordado — vale para TODOS los portales en este equipo */
-    var mm = null; try { mm = JSON.parse(localStorage.getItem('farmers_candado_master') || 'null'); } catch(e){}
-    if (mm && mm.h === CANDADO_MASTER_HASH) { Portal._esMaster = true; return 'entrar'; }
-    var modo = (data.candado === 'estricto') ? 'estricto' : 'suave';
-    if (!data.telHash) return (modo === 'estricto') ? 'otp' : 'entrar'; /* estricto sin tel: la aduana queda abierta solo para la llave maestra */
-    var m = null; try { m = JSON.parse(localStorage.getItem('farmers_candado_' + Portal.token) || 'null'); } catch(e){}
-    if (m && m.h === data.telHash) return 'entrar';
-    return 'otp';
-  } catch(e){ return 'entrar'; } /* ante cualquier falla interna, no frenar la venta */
+  Portal._esMaster = data.esPropietario === true;
+  return data.autorizado ? 'entrar' : 'otp';
 }
 function entrarAlPortal(data){
   if (data.clienteNombre) {
@@ -2895,8 +2920,7 @@ function cdChipMaestra(){
     document.body.appendChild(c);
     document.getElementById('cd-master-quitar').addEventListener('click', function(){
       if (!confirm('¿Quitar la llave maestra de este equipo?\n\nDesde ahora este equipo también tendrá que poner el código SMS en cada portal (como un cliente). Para volver a tenerla, verifica con tu propio teléfono en cualquier portal.')) return;
-      try { localStorage.removeItem('farmers_candado_master'); } catch(e){}
-      location.reload();
+      signOut(_auth).finally(() => location.reload());
     });
   } catch(e){}
 }
@@ -2908,14 +2932,14 @@ function _cdMsg(html, color){
 }
 function candadoMostrar(data){
   var sub = document.getElementById('cd-sub');
-  if (sub) sub.innerHTML = data.telHash
+  if (sub) sub.innerHTML = data.telRegistrado
     ? ('Catálogo exclusivo de <b>' + (data.clienteNombre || 'tu empresa') + '</b>' + (/\.$/.test(data.clienteNombre || '') ? '' : '.') + '<br>Confirma el teléfono registrado' + (data.telHint ? ' (termina en <b>••' + data.telHint + '</b>)' : '') + ' y te enviaremos un código por SMS.')
     : ('El acceso de <b>' + (data.clienteNombre || 'tu empresa') + '</b> está en activación.<br>Si eres el cliente, escríbenos por WhatsApp para registrar tu teléfono.');
   var wa = document.getElementById('cd-wa');
   if (wa) wa.href = 'https://wa.me/' + CANDADO_WA + '?text=' + encodeURIComponent('Hola Farmers, soy ' + (data.clienteNombre || 'cliente') + ' y tengo problemas para entrar al catálogo.');
   showScreen('screen-candado');
 
-  var conf = null, verifier = null, enviando = false, esMasterOK = false;
+  var conf = null, verifier = null, enviando = false;
   function bloqueo(){
     var b = null; try { b = JSON.parse(localStorage.getItem('farmers_candado_try_' + Portal.token) || 'null'); } catch(e){}
     if (b && b.hasta && Date.now() < b.hasta) return Math.ceil((b.hasta - Date.now()) / 60000);
@@ -2938,12 +2962,11 @@ function candadoMostrar(data){
     enviando = true;
     try {
       _cdMsg('Verificando…');
-      var h = await _cdHash(norm);
-      esMasterOK = (h === CANDADO_MASTER_HASH); /* v2026.10.03b: llave maestra */
-      if (!esMasterOK && h !== data.telHash) {
+      if (!await llamarPortal('telefono', { numero: norm })) {
         var cast = fallo();
-        _cdMsg('Ese número no coincide con el registrado' + (data.telHint ? ' (pista: termina en ••' + data.telHint + ')' : '') + '.' + (cast ? ' Demasiados intentos: espera 5 minutos.' : ''), '#dc2626');
-        enviando = false; return;
+        _cdMsg('El número ingresado no coincide con el registrado.' + (cast ? ' Espera 5 minutos.' : ''), '#dc2626');
+        enviando = false;
+        return;
       }
       if (!verifier) verifier = new RecaptchaVerifier(_auth, 'candado-recaptcha', { size: 'invisible' });
       _cdMsg('Enviando código por SMS…');
@@ -2969,12 +2992,13 @@ function candadoMostrar(data){
     try {
       _cdMsg('Verificando código…');
       await conf.confirm(cod);
-      try { await signOut(_auth); } catch(e){}
-      if (esMasterOK) { Portal._esMaster = true; localStorage.setItem('farmers_candado_master', JSON.stringify({ h: CANDADO_MASTER_HASH, t: Date.now() })); }
-      else { localStorage.setItem('farmers_candado_' + Portal.token, JSON.stringify({ h: data.telHash, t: Date.now() })); }
+      const vigente = await llamarPortal('token');
+      if (!vigente?.autorizado) { await signOut(_auth); throw new Error('El número no está autorizado.'); }
+      Portal._esMaster = vigente.esPropietario === true;
+      Portal.tokenData = vigente; pmInit();
       localStorage.removeItem('farmers_candado_try_' + Portal.token);
       _cdMsg('Verificado. Entrando…', '#16a34a');
-      entrarAlPortal(data);
+      entrarAlPortal(vigente);
     } catch(e) {
       _cdMsg('Código incorrecto o vencido. Reintenta o pide uno nuevo.', '#dc2626');
     }
@@ -2986,7 +3010,7 @@ function candadoMostrar(data){
    clientes, elige uno y carga el pedido en el portal de ese cliente (sus
    precios, su candado). El pedido queda marcado "tomado por" y, al enviarlo,
    un botón abre WhatsApp con el pedido escrito hacia la oficina.          */
-const VD_ADMIN_URL = 'https://farmersve.github.io/farmers-app/';
+const VD_ADMIN_URL = local ? location.origin + '/' : 'https://farmers-app-70a3a.firebaseapp.com/';
 function vdEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function vdIniciar(vtoken, vdata){
   Portal.vendedor = {
@@ -2994,7 +3018,7 @@ function vdIniciar(vtoken, vdata){
     codigo: String(vdata.vendedorCodigo || '').toUpperCase(),
     nombre: String(vdata.vendedorNombre || vdata.vendedorCodigo || 'Vendedor'),
     wa: _cdNorm(vdata.waOficina || '') || CANDADO_WA,
-    adminUrl: vdata.adminUrl || VD_ADMIN_URL
+    adminUrl: VD_ADMIN_URL
   };
   try { setDoc(doc(db, 'portal_tokens', vtoken), { ultimoAcceso: serverTimestamp() }, { merge: true }).catch(function(){}); } catch(e){}
   const clientes = (vdata.clientes || []).filter(function(c){ return c && c.token; })
